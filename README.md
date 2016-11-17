@@ -1,6 +1,6 @@
 [![Build Status]( https://app.wercker.com/status/e5ec9352ed9940c6d4a77eb93a022e29/s/master "wercker status" )]( https://app.wercker.com/project/bykey/e5ec9352ed9940c6d4a77eb93a022e29 )
-[![License]( https://img.shields.io/github/license/DudLab/nanshe_workflow.svg "license" )]( https://raw.githubusercontent.com/DudLab/nanshe_workflow/master/LICENSE.txt )
-[![Release]( https://img.shields.io/github/release/DudLab/nanshe_workflow.svg "release" )]( https://github.com/DudLab/nanshe_workflow/releases/latest )
+[![License]( https://img.shields.io/github/license/nanshe-org/nanshe_workflow.svg "license" )]( https://raw.githubusercontent.com/nanshe-org/nanshe_workflow/master/LICENSE.txt )
+[![Release]( https://img.shields.io/github/release/nanshe-org/nanshe_workflow.svg "release" )]( https://github.com/nanshe-org/nanshe_workflow/releases/latest )
 
 # Nanshe Workflow
 
@@ -18,7 +18,7 @@ The preferred method of installation is to use [Docker]( http://docker.com/ ) as
 
 ### Docker
 
-The easiest way to get started with the workflow is to use [docker]( http://docker.com/ ). It is available for all major OSes and is easy to install. Once installed, we provide [directions]( https://github.com/DudLab/docker_nanshe_workflow#standard-use ) for getting the container up and running that have very simple requirements.
+The easiest way to get started with the workflow is to use [docker]( http://docker.com/ ). It is available for all major OSes and is easy to install. Once installed, we provide [directions]( https://github.com/nanshe-org/docker_nanshe_workflow#standard-use ) for getting the container up and running that have very simple requirements.
 
 ### Conda
 
@@ -26,7 +26,7 @@ If one would rather run the workflow natively instead of using Docker, we provid
 
 ## Usage
 
-These instructions are primarily for usage with `conda`. For typical usage with the Docker container, please see these [instructions]( https://github.com/DudLab/docker_nanshe_workflow#standard-use ).
+These instructions are primarily for usage with `conda`. For typical usage with the Docker container, please see these [instructions]( https://github.com/nanshe-org/docker_nanshe_workflow#standard-use ).
 
 ### Starting
 
