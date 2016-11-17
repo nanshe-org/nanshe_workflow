@@ -57,7 +57,7 @@ setup(
     name="nanshe_workflow",
     version=versioneer.get_version(),
     description="Provides an iPython workflow for running nanshe.",
-    url="https://github.com/DudLab/nanshe_workflow",
+    url="https://github.com/nanshe-org/nanshe_workflow",
     license="Apache 2.0",
     author="John Kirkham",
     author_email="kirkhamj@janelia.hhmi.org",

@@ -78,10 +78,3 @@ build:
         name: Test notebook(s) on Python 3.
         code: |-
           python3 setup.py test
-  after-steps:
-    - email-notify:
-        from: alerts@wercker.com
-        to: $TO_EMAIL
-        username: $FROM_EMAIL
-        password: $PASS
-        host: smtp.gmail.com:587

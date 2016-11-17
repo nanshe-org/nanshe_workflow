@@ -1,6 +1,6 @@
-[![Build Status]( https://app.wercker.com/status/e5ec9352ed9940c6d4a77eb93a022e29/s/master "wercker status" )]( https://app.wercker.com/project/bykey/e5ec9352ed9940c6d4a77eb93a022e29 )
-[![License]( https://img.shields.io/github/license/DudLab/nanshe_workflow.svg "license" )]( https://raw.githubusercontent.com/DudLab/nanshe_workflow/master/LICENSE.txt )
-[![Release]( https://img.shields.io/github/release/DudLab/nanshe_workflow.svg "release" )]( https://github.com/DudLab/nanshe_workflow/releases/latest )
+[![Build Status]( https://app.wercker.com/status/1bc8209f1390ba561c535a4628c5516e/s/master "wercker status" )]( https://app.wercker.com/project/byKey/1bc8209f1390ba561c535a4628c5516e )
+[![License]( https://img.shields.io/github/license/nanshe-org/nanshe_workflow.svg "license" )]( https://raw.githubusercontent.com/nanshe-org/nanshe_workflow/master/LICENSE.txt )
+[![Release]( https://img.shields.io/github/release/nanshe-org/nanshe_workflow.svg "release" )]( https://github.com/nanshe-org/nanshe_workflow/releases/latest )
 
 # Nanshe Workflow
 
@@ -18,7 +18,7 @@ The preferred method of installation is to use [Docker]( http://docker.com/ ) as
 
 ### Docker
 
-The easiest way to get started with the workflow is to use [docker]( http://docker.com/ ). It is available for all major OSes and is easy to install. Once installed, we provide [directions]( https://github.com/DudLab/docker_nanshe_workflow#standard-use ) for getting the container up and running that have very simple requirements.
+The easiest way to get started with the workflow is to use [docker]( http://docker.com/ ). It is available for all major OSes and is easy to install. Once installed, we provide [directions]( https://github.com/nanshe-org/docker_nanshe_workflow#standard-use ) for getting the container up and running that have very simple requirements.
 
 ### Conda
 
@@ -26,7 +26,7 @@ If one would rather run the workflow natively instead of using Docker, we provid
 
 ## Usage
 
-These instructions are primarily for usage with `conda`. For typical usage with the Docker container, please see these [instructions]( https://github.com/DudLab/docker_nanshe_workflow#standard-use ).
+These instructions are primarily for usage with `conda`. For typical usage with the Docker container, please see these [instructions]( https://github.com/nanshe-org/docker_nanshe_workflow#standard-use ).
 
 ### Starting
 
@@ -34,7 +34,7 @@ To start up the workflow, simply open a terminal and run `jupyter notebook nansh
 
 ### Running
 
-Each cell with user input has an explanation beforehand with the relevant parameters noted and how they can be set. The second cell should be used to provide input. Later cells are used to specify various relevant parameters. To run a cell, just press the key commbination `Shift + Enter`. This will take you to the next cell as well. Some cells may also show interactive GUIs so as to explore the result from each operation.
+Each cell with user input has an explanation beforehand with the relevant parameters noted and how they can be set. The second cell should be used to provide input. Later cells are used to specify various relevant parameters. To run a cell, just press the key combination `Shift + Enter`. This will take you to the next cell as well. Some cells may also show interactive GUIs so as to explore the result from each operation.
 
 ## Development
 
