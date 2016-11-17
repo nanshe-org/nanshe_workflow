@@ -1,0 +1,42 @@
+{% set data = load_setup_py_data() %}
+
+package:
+  name: nanshe_workflow
+  version: {{ data.get("version") }}
+
+source:
+  git_url: ..
+
+build:
+  script: python setup.py install --single-version-externally-managed --record=record.txt
+
+requirements:
+  build:
+    - python
+    - setuptools
+  run:
+    - python
+    - psutil
+    - nanshe >=0.1.0a54
+    - bokeh
+    - future
+    - webcolors
+    - notebook
+    - ipyparallel
+    - ipywidgets
+    - runipy
+    - cloudpickle
+    - imgroi
+    - kenjutsu
+    - metawrap
+    - mplview
+    - xnumpy
+    - yail
+    # Testing
+    - mock
+
+about:
+  home: {{ data.get("url") }}
+  license: {{ data.get("license") }}
+  license_file: LICENSE.txt
+  summary: {{ data.get("summary") }}

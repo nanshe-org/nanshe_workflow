@@ -1,0 +1,34 @@
+# Ignore Python object files.
+*.py[cod]
+
+# Ignore build products.
+build/
+dist/
+nanshe_workflow.egg-info/
+
+# Ignore development environment.
+.idea/
+
+# Ignore wercker test directories.
+_builds/
+_projects/
+_steps/
+
+# iPython checkpoints.
+.ipynb_checkpoints/
+
+# Ignore all session registered functions.
+registered_callables.py
+
+# Ignore any data.
+*.h5
+*_proj.html
+
+# iPython Cluster files for Grid Engine.
+sge_controller
+sge_engines
+
+# Dask Distributed files.
+log.client
+log.scheduler
+log.workers
