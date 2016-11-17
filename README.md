@@ -34,7 +34,7 @@ To start up the workflow, simply open a terminal and run `jupyter notebook nansh
 
 ### Running
 
-Each cell with user input has an explanation beforehand with the relevant parameters noted and how they can be set. The second cell should be used to provide input. Later cells are used to specify various relevant parameters. To run a cell, just press the key commbination `Shift + Enter`. This will take you to the next cell as well. Some cells may also show interactive GUIs so as to explore the result from each operation.
+Each cell with user input has an explanation beforehand with the relevant parameters noted and how they can be set. The second cell should be used to provide input. Later cells are used to specify various relevant parameters. To run a cell, just press the key combination `Shift + Enter`. This will take you to the next cell as well. Some cells may also show interactive GUIs so as to explore the result from each operation.
 
 ## Development
 
