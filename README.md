@@ -1,4 +1,4 @@
-[![Build Status]( https://app.wercker.com/status/e5ec9352ed9940c6d4a77eb93a022e29/s/master "wercker status" )]( https://app.wercker.com/project/bykey/e5ec9352ed9940c6d4a77eb93a022e29 )
+[![Build Status]( https://app.wercker.com/status/1bc8209f1390ba561c535a4628c5516e/s/master "wercker status" )]( https://app.wercker.com/project/byKey/1bc8209f1390ba561c535a4628c5516e )
 [![License]( https://img.shields.io/github/license/nanshe-org/nanshe_workflow.svg "license" )]( https://raw.githubusercontent.com/nanshe-org/nanshe_workflow/master/LICENSE.txt )
 [![Release]( https://img.shields.io/github/release/nanshe-org/nanshe_workflow.svg "release" )]( https://github.com/nanshe-org/nanshe_workflow/releases/latest )
 
