@@ -34,12 +34,15 @@ def stack_compute_traces_parallel(client, num_frames):
             callable:             parallelized callable.
     """
 
-    def compute_traces(imagestack, rois):
-        traces_dtype = numpy.dtype(float)
-        if issubclass(imagestack.dtype.type, numpy.floating):
-            traces_dtype = imagestack.dtype
+    def compute_traces(imagestack, rois, out=None):
+        if out is None:
+            traces_dtype = numpy.dtype(float)
+            if issubclass(imagestack.dtype.type, numpy.floating):
+                traces_dtype = imagestack.dtype
 
-        traces = numpy.empty((len(rois), len(imagestack)), dtype=traces_dtype)
+            traces = numpy.empty((len(rois), len(imagestack)), dtype=traces_dtype)
+        else:
+            traces = out
 
         trace_func = lambda d, r: (d[...][:, r].mean(axis=1))
 
