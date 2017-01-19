@@ -58,10 +58,12 @@ def stack_compute_traces_parallel(client, num_frames):
                 start=1
         ):
             for i in irange(len(rois)):
-                trace_halo_blocks.append([slice(j_0, j_1)])
+                each_trace_halo_block = [slice(j_0, j_1)]
                 for k in irange(1, len(imagestack.shape)):
-                    trace_halo_blocks[-1].append(slice(None))
-                trace_halo_blocks[-1] = tuple(trace_halo_blocks[-1])
+                    each_trace_halo_block.append(slice(None))
+                each_trace_halo_block = tuple(each_trace_halo_block)
+
+                trace_halo_blocks.append(each_trace_halo_block)
 
         trace_data_blocks = DataBlocks(imagestack, trace_halo_blocks)
 
