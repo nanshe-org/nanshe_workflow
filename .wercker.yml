@@ -24,7 +24,7 @@ build:
           mv .git/shallow-not .git/shallow || true
           rm -rf /opt/conda2/conda-bld/work/*
           conda2 remove -y -n _build --all || true
-          conda2 remove -y -n _build_placehold_placehold_placehold_placehold_placehold_placeh --all
+          conda2 remove -y -n _build_placehold_placehold_placehold_placehold_placehold_placeh --all || true
           conda2 remove -y -n _test --all || true
     - script:
         name: Build the Python 3 package and clean up after.
@@ -34,7 +34,7 @@ build:
           mv .git/shallow-not .git/shallow || true
           rm -rf /opt/conda3/conda-bld/work/*
           conda3 remove -y -n _build --all || true
-          conda3 remove -y -n _build_placehold_placehold_placehold_placehold_placehold_placeh --all
+          conda3 remove -y -n _build_placehold_placehold_placehold_placehold_placehold_placeh --all || true
           conda3 remove -y -n _test --all || true
     - script:
         name: Install for Python 2 and clean up.
