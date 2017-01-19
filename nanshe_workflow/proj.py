@@ -44,7 +44,7 @@ def stack_compute_traces_parallel(client, num_frames):
         else:
             traces = out
 
-        trace_func = lambda d, r: (d[...][:, r].mean(axis=1))
+        trace_func = lambda d, r: (d[...][:, r[...]].mean(axis=1))
 
         num_frame_groups = 0
         trace_halo_blocks = []
@@ -69,7 +69,7 @@ def stack_compute_traces_parallel(client, num_frames):
         trace_blocks = lview.map(
             trace_func,
             trace_data_blocks,
-            itertools.chain(*itertools.repeat(rois, num_frame_groups))
+            itertools.chain(*itertools.repeat(rois[...], num_frame_groups))
         )
 
         progress_bar = FloatProgress(
