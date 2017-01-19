@@ -13,6 +13,7 @@ nanshe_workflow.egg-info/
 _builds/
 _projects/
 _steps/
+.wercker/
 
 # iPython checkpoints.
 .ipynb_checkpoints/
