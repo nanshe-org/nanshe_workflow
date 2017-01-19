@@ -9,6 +9,7 @@ import numbers
 import numpy
 
 from builtins import (
+    map as imap,
     range as irange,
     zip as izip,
 )
@@ -48,6 +49,7 @@ def stack_compute_traces_parallel(client, num_frames):
 
         num_frame_groups = 0
         trace_halo_blocks = []
+        roi_halo_blocks = []
         for num_frame_groups, (j_0, j_1) in enumerate(
                 sliding_window_filled(
                     itertools.chain(
@@ -59,19 +61,24 @@ def stack_compute_traces_parallel(client, num_frames):
         ):
             for i in irange(len(rois)):
                 each_trace_halo_block = [slice(j_0, j_1)]
+                each_roi_halo_block = [i]
                 for k in irange(1, len(imagestack.shape)):
                     each_trace_halo_block.append(slice(None))
+                    each_roi_halo_block.append(slice(None))
                 each_trace_halo_block = tuple(each_trace_halo_block)
+                each_roi_halo_block = tuple(each_roi_halo_block)
 
                 trace_halo_blocks.append(each_trace_halo_block)
+                roi_halo_blocks.append(each_roi_halo_block)
 
         trace_data_blocks = DataBlocks(imagestack, trace_halo_blocks)
+        roi_data_blocks = DataBlocks(rois, roi_halo_blocks)
 
         lview = client.load_balanced_view()
         trace_blocks = lview.map(
             trace_func,
             trace_data_blocks,
-            itertools.chain(*itertools.repeat(rois[...], num_frame_groups))
+            roi_data_blocks
         )
 
         progress_bar = FloatProgress(
