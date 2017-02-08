@@ -18,7 +18,7 @@ requirements:
     - python
     - psutil
     - nanshe >=0.1.0a54
-    - bokeh
+    - bokeh >=0.12.4
     - future
     - webcolors
     - notebook
