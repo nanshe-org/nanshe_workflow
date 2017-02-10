@@ -466,9 +466,9 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
 
                 def __iter__(self):
                     for each_data_block_dict_sample in self.data_blocks_dict_sample:
-                        if not isinstance(self.data, h5py.Dataset):
+                        try:
                             yield self.data[each_data_block_dict_sample]
-                        else:
+                        except TypeError:
                             each_data_block_dict = numpy.empty(
                                 (len(each_data_block_dict_sample[0]),) +
                                 len_slices(each_data_block_dict_sample[1:]),
