@@ -11,7 +11,6 @@ from time import sleep
 
 from psutil import cpu_count
 
-import h5py
 import numpy
 
 from builtins import zip as izip
