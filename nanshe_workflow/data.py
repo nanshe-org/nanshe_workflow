@@ -23,8 +23,8 @@ class DataBlocks(object):
         return(len(self.data_blocks))
 
 
-class LazyHDF5Dataset(object):
-    class LazyHDF5DatasetSelection(object):
+class LazyDataset(object):
+    class LazyDatasetSelection(object):
         def __init__(self, filename, datasetname, key, shape, dtype, size):
             self.filename = filename
             self.datasetname = datasetname
@@ -33,6 +33,25 @@ class LazyHDF5Dataset(object):
             self.dtype = dtype
             self.size = size
 
+        def __getitem__(self, key):
+            pass
+
+    def __init__(self, filename, datasetname):
+        pass
+
+    def __getitem__(self, key):
+        pass
+
+    def __len__(self):
+        return(self.shape[0])
+
+    @contextmanager
+    def astype(self, dtype):
+        yield None
+
+
+class LazyHDF5Dataset(LazyDataset):
+    class LazyHDF5DatasetSelection(LazyDataset.LazyDatasetSelection):
         def __getitem__(self, key):
             with h5py.File(self.filename, "r") as filehandle:
                 dataset = filehandle[self.datasetname]
@@ -96,9 +115,6 @@ class LazyHDF5Dataset(object):
                 self.size
             )
         )
-
-    def __len__(self):
-        return(self.shape[0])
 
     @contextmanager
     def astype(self, dtype):
