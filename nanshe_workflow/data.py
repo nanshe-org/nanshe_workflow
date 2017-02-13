@@ -23,8 +23,8 @@ class DataBlocks(object):
         return(len(self.data_blocks))
 
 
-class LazyDataset(object):
-    class LazyDatasetSelection(object):
+class LazyHDF5Dataset(object):
+    class LazyHDF5DatasetSelection(object):
         def __init__(self, filename, datasetname, key, shape, dtype, size):
             self.filename = filename
             self.datasetname = datasetname
@@ -87,7 +87,7 @@ class LazyDataset(object):
 
     def __getitem__(self, key):
         return(
-            LazyDataset.LazyDatasetSelection(
+            LazyHDF5Dataset.LazyHDF5DatasetSelection(
                 self.filename,
                 self.datasetname,
                 key,
@@ -102,7 +102,7 @@ class LazyDataset(object):
 
     @contextmanager
     def astype(self, dtype):
-        self_astype = LazyDataset(self.filename, self.datasetname)
+        self_astype = LazyHDF5Dataset(self.filename, self.datasetname)
         self_astype.dtype = numpy.dtype(dtype)
 
         yield(self_astype)
