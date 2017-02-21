@@ -34,6 +34,25 @@ class LazyDataset(object):
             self.size = size
 
         def __getitem__(self, key):
+            pass
+
+    def __init__(self, filename, datasetname):
+        pass
+
+    def __getitem__(self, key):
+        pass
+
+    def __len__(self):
+        return(self.shape[0])
+
+    @contextmanager
+    def astype(self, dtype):
+        yield None
+
+
+class LazyHDF5Dataset(LazyDataset):
+    class LazyHDF5DatasetSelection(LazyDataset.LazyDatasetSelection):
+        def __getitem__(self, key):
             with h5py.File(self.filename, "r") as filehandle:
                 dataset = filehandle[self.datasetname]
                 with dataset.astype(self.dtype):
@@ -87,7 +106,7 @@ class LazyDataset(object):
 
     def __getitem__(self, key):
         return(
-            LazyDataset.LazyDatasetSelection(
+            LazyHDF5Dataset.LazyHDF5DatasetSelection(
                 self.filename,
                 self.datasetname,
                 key,
@@ -97,12 +116,9 @@ class LazyDataset(object):
             )
         )
 
-    def __len__(self):
-        return(self.shape[0])
-
     @contextmanager
     def astype(self, dtype):
-        self_astype = LazyDataset(self.filename, self.datasetname)
+        self_astype = LazyHDF5Dataset(self.filename, self.datasetname)
         self_astype.dtype = numpy.dtype(dtype)
 
         yield(self_astype)
