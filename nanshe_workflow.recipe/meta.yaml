@@ -24,6 +24,8 @@ requirements:
     - notebook
     - ipyparallel
     - ipywidgets
+    - dask
+    - distributed
     - runipy
     - cloudpickle
     - imgroi
