@@ -8,6 +8,7 @@ import shutil
 
 import h5py
 import numpy
+import zarr
 
 from past.builtins import unicode
 
@@ -21,6 +22,12 @@ def io_remove(name):
         shutil.rmtree(name)
     else:
         raise ValueError("Unable to remove path, '%s'." % name)
+
+
+@contextmanager
+def open_zarr(name, mode="r"):
+    store = zarr.DirectoryStore(name)
+    yield zarr.open_group(store, mode)
 
 
 class DataBlocks(object):
