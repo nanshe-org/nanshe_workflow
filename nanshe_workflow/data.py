@@ -2,6 +2,7 @@ __author__ = "John Kirkham <kirkhamj@janelia.hhmi.org>"
 __date__ = "$Nov 05, 2015 13:54$"
 
 
+import collections
 from contextlib import contextmanager
 import os
 import shutil
@@ -10,6 +11,9 @@ import h5py
 import numpy
 import zarr
 
+import kenjutsu.format
+
+from builtins import map
 from past.builtins import unicode
 
 
@@ -181,6 +185,82 @@ class LazyHDF5Dataset(LazyDataset):
     @contextmanager
     def astype(self, dtype):
         self_astype = LazyHDF5Dataset(self.filename, self.datasetname)
+        self_astype.dtype = numpy.dtype(dtype)
+
+        yield(self_astype)
+
+
+class LazyZarrDataset(LazyDataset):
+    class LazyZarrDatasetSelection(LazyDataset.LazyDatasetSelection):
+        def __getitem__(self, key):
+            with open_zarr(self.filename, "r") as filehandle:
+                dataset = filehandle[self.datasetname].astype(self.dtype)
+
+                try:
+                    return(dataset[self.key][key])
+                except TypeError:
+                    ref_key = list()
+                    for i in range(len(self.key)):
+                        each_key = self.key[i]
+                        try:
+                            each_key = list(each_key)
+                        except TypeError:
+                            pass
+                        ref_key.append(each_key)
+                    ref_key = tuple(ref_key)
+
+                    ref_key = kenjutsu.format.reformat_slices(ref_key, self.shape)
+
+                    # Verify there is only one sequence
+                    num_seqs = sum(map(
+                        lambda i: isinstance(i, collections.Sequence),
+                        ref_key
+                    ))
+                    if num_seqs > 1:
+                        raise ValueError(
+                            "Cannot take more than one sequence of integers."
+                            " Got %i instead." % num_seqs
+                        )
+                    elif num_seqs == 1:
+                        if not isinstance(ref_key[0], collections.Sequence):
+                            raise ValueError(
+                                "Sequence of integers must be first."
+                            )
+
+                    result = []
+                    for each_key in kenjutsu.format.split_indices(ref_key):
+                        result.append([dataset[each_key]])
+                    result = numpy.concatenate(result)
+
+                    return(result[key])
+
+    def __init__(self, filename, datasetname):
+        self.filename = filename
+        self.datasetname = datasetname
+
+        with open_zarr(self.filename, "r") as filehandle:
+            dataset = filehandle[self.datasetname]
+
+            self.shape = dataset.shape
+            self.dtype = dataset.dtype
+
+        self.size = numpy.prod(self.shape)
+
+    def __getitem__(self, key):
+        return(
+            LazyZarrDataset.LazyZarrDatasetSelection(
+                self.filename,
+                self.datasetname,
+                key,
+                self.shape,
+                self.dtype,
+                self.size
+            )
+        )
+
+    @contextmanager
+    def astype(self, dtype):
+        self_astype = LazyZarrDataset(self.filename, self.datasetname)
         self_astype.dtype = numpy.dtype(dtype)
 
         yield(self_astype)
