@@ -23,6 +23,7 @@ registered_callables.py
 
 # Ignore any data.
 *.h5
+*.zarr
 *_proj.html
 
 # iPython Cluster files for Grid Engine.
