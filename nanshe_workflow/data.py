@@ -30,6 +30,48 @@ def open_zarr(name, mode="r"):
     yield zarr.open_group(store, mode)
 
 
+def hdf5_to_zarr(hdf5_file, zarr_file):
+    def copy(name, h5py_obj):
+        if isinstance(h5py_obj, h5py.Group):
+            zarr_obj = zarr_file.create_group(name)
+        elif isinstance(h5py_obj, h5py.Dataset):
+            zarr_obj = zarr_file.create_dataset(
+                name,
+                data=h5py_obj,
+                chunks=h5py_obj.chunks
+            )
+        else:
+            raise NotImplementedError(
+                "No Zarr type analogue for HDF5 type,"
+                " '%s'." % str(type(h5py_obj))
+            )
+
+        zarr_obj.attrs.update(h5py_obj.attrs)
+
+    hdf5_file.visititems(copy)
+
+
+def zarr_to_hdf5(zarr_file, hdf5_file):
+    def copy(name, zarr_obj):
+        if isinstance(zarr_obj, zarr.Group):
+            h5py_obj = hdf5_file.create_group(name)
+        elif isinstance(zarr_obj, zarr.Array):
+            h5py_obj = hdf5_file.create_dataset(
+                name,
+                data=zarr_obj,
+                chunks=zarr_obj.chunks
+            )
+        else:
+            raise NotImplementedError(
+                "No HDF5 type analogue for Zarr type,"
+                " '%s'." % str(type(zarr_obj))
+            )
+
+        h5py_obj.attrs.update(zarr_obj.attrs)
+
+    zarr_file.visititems(copy)
+
+
 class DataBlocks(object):
     def __init__(self, data, data_blocks):
         self.data = data
