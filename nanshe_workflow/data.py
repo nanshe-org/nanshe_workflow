@@ -3,11 +3,24 @@ __date__ = "$Nov 05, 2015 13:54$"
 
 
 from contextlib import contextmanager
+import os
+import shutil
 
 import h5py
 import numpy
 
 from past.builtins import unicode
+
+
+def io_remove(name):
+    if not os.path.exists(name):
+        return
+    elif os.path.isfile(name):
+        os.remove(name)
+    elif os.path.isdir(name):
+        shutil.rmtree(name)
+    else:
+        raise ValueError("Unable to remove path, '%s'." % name)
 
 
 class DataBlocks(object):
