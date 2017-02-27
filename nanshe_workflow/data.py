@@ -6,6 +6,7 @@ import collections
 from contextlib import contextmanager
 import os
 import shutil
+import zipfile
 
 import h5py
 import numpy
@@ -30,8 +31,17 @@ def io_remove(name):
 
 @contextmanager
 def open_zarr(name, mode="r"):
-    store = zarr.DirectoryStore(name)
-    yield zarr.open_group(store, mode)
+    if not os.path.exists(name) and mode in ["a", "w"]:
+        store = zarr.DirectoryStore(name)
+        yield zarr.open_group(store, mode)
+    elif os.path.isdir(name):
+        store = zarr.DirectoryStore(name)
+        yield zarr.open_group(store, mode)
+    elif zipfile.is_zipfile(name):
+        with zarr.ZipStore(name, mode=mode, compression=0, allowZip64=True) as store:
+            yield zarr.open_group(store, mode)
+    else:
+        raise NotImplementedError("Unable to open '%s'." % name)
 
 
 def hdf5_to_zarr(hdf5_file, zarr_file):
