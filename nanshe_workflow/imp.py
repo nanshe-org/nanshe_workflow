@@ -5,6 +5,7 @@ __date__ = "$Nov 10, 2015 16:28$"
 import itertools
 
 import numpy
+import zarr
 
 from builtins import range as irange
 
@@ -149,7 +150,7 @@ def block_postprocess_data_parallel(client):
             progress_bar.value = i / float(len(result_blocks))
             new_neurons_set = merge_neuron_sets(
                 new_neurons_set,
-                each_result_block,
+                each_result_block[...],
                 **parameters["merge_neuron_sets"]
             )
 

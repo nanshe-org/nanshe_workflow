@@ -13,6 +13,7 @@ from time import sleep
 from psutil import cpu_count
 
 import numpy
+import zarr
 
 from builtins import zip as izip
 
@@ -155,7 +156,7 @@ def store_ipyparallel(data_blocks, result_blocks, out):
             def _store(each_data_block,
                        each_result_block,
                        out=self.out):
-                out[each_data_block] = each_result_block
+                out[each_data_block] = each_result_block[...]
 
             for each_data_block, each_result_block in izip(
                 self.data_blocks, self.result_blocks
@@ -256,7 +257,7 @@ def block_parallel(client, calculate_block_shape, calculate_halo):
                     len(block_halo) == len(data.shape)
                 )
 
-            calculate_block = lambda dhb, rht: (
+            calculate_block = lambda dhb, rht: zarr.array(
                 calculate(dhb[...], *new_args, **new_kwargs)[rht]
             )
 
@@ -536,9 +537,9 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
                 def __len__(self):
                     return(len(self.data_blocks_dict_sample))
 
-            calculate_block = lambda db, dbds, kw: calculate(
+            calculate_block = lambda db, dbds, kw: zarr.array(calculate(
                 db[...], dbds[...], *new_args, **kw
-            )
+            ))
             result_blocks = lview.map(
                 calculate_block,
                 DataBlocks(data, data_blocks),
@@ -553,7 +554,7 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
             ):
                 progress_bar.value = i / float(len(result_blocks))
 
-                out[each_result_blocks_loc] = each_result_block
+                out[each_result_blocks_loc] = each_result_block[...]
 
             progress_bar.value = 1.0
 
@@ -614,7 +615,7 @@ def stack_compute_subtract_parallel(client, num_frames):
                 izip(data_blocks, result_blocks)
         ):
             progress_bar.value = i / float(len(result_blocks))
-            out[each_data_block] = each_result_block
+            out[each_data_block] = each_result_block[...]
 
         progress_bar.value = 1.0
 

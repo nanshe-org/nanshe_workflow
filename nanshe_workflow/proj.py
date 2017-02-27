@@ -7,6 +7,7 @@ import math
 import numbers
 
 import numpy
+import zarr
 
 from builtins import (
     map as imap,
@@ -45,7 +46,7 @@ def stack_compute_traces_parallel(client, num_frames):
         else:
             traces = out
 
-        trace_func = lambda d, r: (d[...][:, r[...]].mean(axis=1))
+        trace_func = lambda d, r: zarr.array(d[...][:, r[...]].mean(axis=1))
 
         num_frame_groups = 0
         trace_halo_blocks = []
@@ -96,7 +97,7 @@ def stack_compute_traces_parallel(client, num_frames):
                 )
         ):
             progress_bar.value = j
-            traces[i, trace_halo_blocks[k][0]] = each_trace_block
+            traces[i, trace_halo_blocks[k][0]] = each_trace_block[...]
 
         progress_bar.value = progress_bar.max
 
@@ -126,7 +127,7 @@ def stack_compute_quantile_projection_parallel(client, num_frames):
 
         quantiles = numpy.zeros(data.shape[1:], float_dtype)
 
-        quantile_func = lambda d, out=None: (
+        quantile_func = lambda d, out=None: zarr.array(
             numpy.percentile(d[...], q=quantile*100, axis=0, out=out)
         )
 
@@ -156,7 +157,7 @@ def stack_compute_quantile_projection_parallel(client, num_frames):
             progress_bar.value = i
             quantile_func(
                 numpy.concatenate(
-                    [quantiles[None], each_data_block[None]]
+                    [quantiles[None], each_data_block[...][None]]
                 ),
                 out=quantiles
             )
@@ -243,7 +244,7 @@ def stack_compute_moment_projections_parallel(client, num_frames):
 
         moments = numpy.zeros((num_moment,) + data.shape[1:], moments_dtype)
 
-        moments_func = lambda d, m: (
+        moments_func = lambda d, m: zarr.array(
             (d[...].astype(moments_dtype)**m).sum(axis=0)
         )
 
@@ -286,7 +287,7 @@ def stack_compute_moment_projections_parallel(client, num_frames):
                 moment_blocks
         ):
             progress_bar.value = i
-            moments[j] += each_moment_block
+            moments[j] += each_moment_block[...]
 
         progress_bar.value = progress_bar.max
 
@@ -318,7 +319,7 @@ def stack_compute_harmonic_mean_projection_parallel(client, num_frames):
 
         mean = numpy.zeros(data.shape[1:], mean_dtype)
 
-        mean_func = lambda d: (
+        mean_func = lambda d: zarr.array(
             (numpy.reciprocal(d[...].astype(mean_dtype))).sum(axis=0)
         )
 
@@ -350,7 +351,7 @@ def stack_compute_harmonic_mean_projection_parallel(client, num_frames):
         display(progress_bar)
         for i, each_mean_block in enumerate(mean_blocks):
             progress_bar.value = i
-            mean += each_mean_block
+            mean += each_mean_block[...]
 
         progress_bar.value = progress_bar.max
 
@@ -387,7 +388,7 @@ def stack_compute_adj_harmonic_mean_projection_parallel(client, num_frames):
 
         mean = numpy.zeros(data.shape[1:], mean_dtype)
 
-        mean_func = lambda d: (
+        mean_func = lambda d: zarr.array(
             (numpy.reciprocal(d[...].astype(mean_dtype) - data_adj)).sum(axis=0)
         )
 
@@ -419,7 +420,7 @@ def stack_compute_adj_harmonic_mean_projection_parallel(client, num_frames):
         display(progress_bar)
         for i, each_mean_block in enumerate(mean_blocks):
             progress_bar.value = i
-            mean += each_mean_block
+            mean += each_mean_block[...]
 
         progress_bar.value = progress_bar.max
 
