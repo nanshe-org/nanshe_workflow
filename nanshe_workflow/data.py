@@ -44,6 +44,20 @@ def open_zarr(name, mode="r"):
         raise NotImplementedError("Unable to open '%s'." % name)
 
 
+def zip_zarr(name):
+    zip_ext = os.extsep + "zip"
+
+    with zipfile.ZipFile(name + zip_ext, "w"):
+        pass
+
+    with open_zarr(name + zip_ext, "w") as f1:
+        with open_zarr(name, "r") as f2:
+            f1.store.update(f2.store)
+
+    io_remove(name)
+    shutil.move(name + zip_ext, name)
+
+
 def hdf5_to_zarr(hdf5_file, zarr_file):
     def copy(name, h5py_obj):
         if isinstance(h5py_obj, h5py.Group):
