@@ -15,7 +15,8 @@ import numpy
 
 from builtins import zip as izip
 
-from kenjutsu.kenjutsu import len_slices, split_blocks
+from kenjutsu.measure import len_slices
+from kenjutsu.blocks import split_blocks
 
 from metawrap.metawrap import tied_call_args, unwrap
 

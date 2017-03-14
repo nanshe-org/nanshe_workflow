@@ -27,7 +27,7 @@ requirements:
     - runipy
     - cloudpickle
     - imgroi
-    - kenjutsu
+    - kenjutsu >=0.3.0
     - metawrap
     - mplview
     - xnumpy
