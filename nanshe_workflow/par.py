@@ -173,6 +173,12 @@ def block_parallel(client, calculate_block_shape, calculate_halo):
             elif "out" in new_kwargs:
                 out = new_kwargs.pop("out")
 
+            if out is None:
+                out = numpy.empty(
+                    data.shape,
+                    data.dtype
+                )
+
             new_args = tuple(ordered_bound_args.values())[1:len(args)+1] + new_args
             new_kwargs.update(dict(list(ordered_bound_args.items())[len(args)+1:]))
             ordered_bound_args = None
@@ -214,9 +220,6 @@ def block_parallel(client, calculate_block_shape, calculate_halo):
                 DataBlocks(data, data_halo_blocks),
                 result_halos_trim
             )
-
-            if out is None:
-                out = numpy.empty_like(data)
 
             progress_bar = FloatProgress(min=0.0, max=1.0)
             display(progress_bar)
@@ -359,6 +362,12 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
             elif "out" in new_kwargs:
                 out = new_kwargs.pop("out")
 
+            if out is None:
+                out = numpy.empty(
+                    (n_components,) + data.shape[1:],
+                    data.dtype
+                )
+
             new_args = tuple(list(ordered_bound_args.values())[1:len(args)+1]) + new_args
             new_kwargs.update(dict(list(ordered_bound_args.items())[len(args)+1:]))
             ordered_bound_args = None
@@ -495,12 +504,6 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
                 data_blocks_kwargs
             )
 
-            if out is None:
-                out = numpy.empty(
-                    (n_components,) + data.shape[1:],
-                    data.dtype
-                )
-
             progress_bar = FloatProgress(min=0.0, max=1.0)
             display(progress_bar)
             for i, (each_data_block, each_result_blocks_loc, each_result_block) in enumerate(
@@ -543,6 +546,12 @@ def stack_compute_subtract_parallel(client, num_frames):
 
         data2 = data2[...]
 
+        if out is None:
+            out = numpy.empty(
+                data1.shape,
+                data1.dtype
+            )
+
         block_shape = (num_frames,) + data1.shape[1:]
 
         data_blocks, data_halo_blocks, result_halos_trim = split_blocks(
@@ -559,9 +568,6 @@ def stack_compute_subtract_parallel(client, num_frames):
             DataBlocks(data1, data_halo_blocks),
             result_halos_trim
         )
-
-        if out is None:
-            out = numpy.empty_like(data1)
 
         progress_bar = FloatProgress(min=0.0, max=1.0)
         display(progress_bar)
