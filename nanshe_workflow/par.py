@@ -2,6 +2,7 @@ __author__ = "John Kirkham <kirkhamj@janelia.hhmi.org>"
 __date__ = "$Nov 09, 2015 12:47$"
 
 
+import collections
 import copy
 import gc
 import math
@@ -121,6 +122,55 @@ def get_client(profile):
     return(client)
 
 
+def map_ipyparallel(client, calculate_block, data, block_shape, block_halo):
+    block_indices, data_blocks, data_halo_blocks, result_halos_trim = split_blocks(
+        data.shape, block_shape, block_halo, index=True
+    )
+
+    lview = client.load_balanced_view()
+
+    result_blocks = lview.map(
+        calculate_block,
+        DataBlocks(data, data_halo_blocks),
+        result_halos_trim
+    )
+
+    return data_blocks, result_blocks
+
+
+def store_ipyparallel(data_blocks, result_blocks, out):
+    class AsyncStore(collections.Sized, collections.Iterable):
+        def __init__(self,
+                     data_blocks=data_blocks,
+                     result_blocks=result_blocks,
+                     out=out):
+            self.data_blocks = data_blocks
+            self.result_blocks = result_blocks
+            self.out = out
+
+        def __len__(self):
+            return len(self.data_blocks)
+
+        def __iter__(self):
+            def _store(each_data_block,
+                       each_result_block,
+                       out=self.out):
+                out[each_data_block] = each_result_block
+
+            for each_data_block, each_result_block in izip(
+                self.data_blocks, self.result_blocks
+            ):
+                each_task = lambda: _store(
+                    each_data_block=each_data_block,
+                    each_result_block=each_result_block
+                )
+                yield each_task
+
+    tasks = AsyncStore()
+
+    return tasks
+
+
 def block_parallel(client, calculate_block_shape, calculate_halo):
     """
         Take a single core function and construct a form that can work on
@@ -206,28 +256,20 @@ def block_parallel(client, calculate_block_shape, calculate_halo):
                     len(block_halo) == len(data.shape)
                 )
 
-            data_blocks, data_halo_blocks, result_halos_trim = split_blocks(
-                data.shape, block_shape, block_halo
-            )
-
-            lview = client.load_balanced_view()
-
             calculate_block = lambda dhb, rht: (
                 calculate(dhb[...], *new_args, **new_kwargs)[rht]
             )
-            result_blocks = lview.map(
-                calculate_block,
-                DataBlocks(data, data_halo_blocks),
-                result_halos_trim
+
+            data_blocks, result_blocks = map_ipyparallel(
+                client, calculate_block, data, block_shape, block_halo
             )
 
             progress_bar = FloatProgress(min=0.0, max=1.0)
             display(progress_bar)
-            for i, (each_data_block, each_result_block) in enumerate(
-                    izip(data_blocks, result_blocks)
-            ):
-                progress_bar.value = i / float(len(result_blocks))
-                out[each_data_block] = each_result_block
+            tasks = store_ipyparallel(data_blocks, result_blocks, out)
+            for i, each_task in enumerate(tasks):
+                progress_bar.value = i / float(len(tasks))
+                each_task()
 
             progress_bar.value = 1.0
 
@@ -558,15 +600,12 @@ def stack_compute_subtract_parallel(client, num_frames):
             data1.shape, block_shape
         )
 
-        lview = client.load_balanced_view()
-
         calculate_block = lambda dhb, rht: (
             (dhb[...] - data2[...])[rht]
         )
-        result_blocks = lview.map(
-            calculate_block,
-            DataBlocks(data1, data_halo_blocks),
-            result_halos_trim
+
+        data_blocks, result_blocks = map_ipyparallel(
+            client, calculate_block, data1, block_shape, len(data1.shape) * (0,)
         )
 
         progress_bar = FloatProgress(min=0.0, max=1.0)
