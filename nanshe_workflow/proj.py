@@ -446,7 +446,7 @@ def stack_norm_layer_parallel(client, num_frames):
             callable:             parallelized callable.
     """
 
-    def norm_layer(data, out):
+    def norm_layer(data, out=None):
         if out is None:
             out = numpy.empty(data.shape, data.dtype)
 
