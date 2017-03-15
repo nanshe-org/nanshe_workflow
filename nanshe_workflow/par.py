@@ -2,6 +2,7 @@ __author__ = "John Kirkham <kirkhamj@janelia.hhmi.org>"
 __date__ = "$Nov 09, 2015 12:47$"
 
 
+from contextlib import contextmanager
 import collections
 import copy
 import gc
@@ -14,6 +15,8 @@ from psutil import cpu_count
 
 import numpy
 import zarr
+
+import dask
 
 from builtins import zip as izip
 
@@ -121,6 +124,15 @@ def get_client(profile):
         sleep(1.0)
 
     return(client)
+
+
+@contextmanager
+def get_executor(client):
+    executor = client.become_dask()
+    try:
+        yield executor
+    finally:
+        executor.shutdown()
 
 
 def map_ipyparallel(client, calculate_block, data, block_shape, block_halo):
