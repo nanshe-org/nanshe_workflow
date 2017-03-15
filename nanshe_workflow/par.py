@@ -349,22 +349,23 @@ def block_parallel(client, calculate_block_shape, calculate_halo):
                     len(block_halo) == len(data.shape)
                 )
 
-            calculate_block = lambda dhb, rht: zarr.array(
-                calculate(dhb[...], *new_args, **new_kwargs)[rht]
-            )
+            with get_executor(client) as executor:
+                calculate_block = lambda dhb, rht: zarr.array(
+                    calculate(dhb[...], *new_args, **new_kwargs)[rht]
+                )
 
-            data_blocks, result_blocks = map_ipyparallel(
-                client, calculate_block, data, block_shape, block_halo
-            )
+                data_blocks, result_blocks = map_ipyparallel(
+                    client, calculate_block, data, block_shape, block_halo
+                )
 
-            progress_bar = FloatProgress(min=0.0, max=1.0)
-            display(progress_bar)
-            tasks = store_ipyparallel(data_blocks, result_blocks, out)
-            for i, each_task in enumerate(tasks):
-                progress_bar.value = i / float(len(tasks))
-                each_task()
+                progress_bar = FloatProgress(min=0.0, max=1.0)
+                display(progress_bar)
+                tasks = store_ipyparallel(data_blocks, result_blocks, out)
+                for i, each_task in enumerate(tasks):
+                    progress_bar.value = i / float(len(tasks))
+                    each_task()
 
-            progress_bar.value = 1.0
+                progress_bar.value = 1.0
 
             client[:].apply(gc.collect).get()
             gc.collect()
@@ -693,13 +694,14 @@ def stack_compute_subtract_parallel(client, num_frames):
             data1.shape, block_shape
         )
 
-        calculate_block = lambda dhb, rht: (
-            (dhb[...] - data2[...])[rht]
-        )
+        with get_executor(client) as executor:
+            calculate_block = lambda dhb, rht: zarr.array(
+                (dhb[...] - data2[...])[rht]
+            )
 
-        data_blocks, result_blocks = map_ipyparallel(
-            client, calculate_block, data1, block_shape, len(data1.shape) * (0,)
-        )
+            data_blocks, result_blocks = map_ipyparallel(
+                client, calculate_block, data1, block_shape, len(data1.shape) * (0,)
+            )
 
         progress_bar = FloatProgress(min=0.0, max=1.0)
         display(progress_bar)
