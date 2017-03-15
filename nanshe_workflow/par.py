@@ -210,6 +210,27 @@ def map_ipyparallel(client, calculate_block, data, block_shape, block_halo):
     return data_blocks, result_blocks
 
 
+def store_dask(data_blocks, result_blocks, out):
+    tasks = []
+    lock = dask.utils.SerializableLock()
+    with lock:
+        for each_data_block, each_result_block in izip(
+            data_blocks, result_blocks
+        ):
+            r = dask.array.store(
+                each_result_block,
+                out,
+                regions=each_data_block,
+                lock=lock,
+                compute=False
+            )
+            each_task = lambda r = r: dask.compute(r)
+
+            tasks.append(each_task)
+
+    return tasks
+
+
 def store_ipyparallel(data_blocks, result_blocks, out):
     class AsyncStore(collections.Sized, collections.Iterable):
         def __init__(self,
