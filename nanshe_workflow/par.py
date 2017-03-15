@@ -20,10 +20,11 @@ import zarr
 import dask
 import dask.array
 
+from builtins import map as imap
 from builtins import zip as izip
 
 from kenjutsu.measure import len_slices
-from kenjutsu.blocks import split_blocks
+from kenjutsu.blocks import num_blocks, split_blocks
 
 from metawrap.metawrap import tied_call_args, unwrap
 
@@ -152,6 +153,43 @@ def concat_dask(dask_arr):
             )
         result = result2
     result = result[()]
+
+    return result
+
+
+def map_dask(client, calculate_block, data, block_shape, block_halo, blocks=True):
+    n_blocks = num_blocks(data.shape, block_shape)
+    block_indices, data_blocks, data_halo_blocks, result_halos_trim = split_blocks(
+        data.shape, block_shape, block_halo, index=True
+    )
+
+    result = numpy.empty(
+        n_blocks,
+        dtype=object
+    )
+    for i, each_shape, each_haloed_block, each_trim in izip(
+            block_indices,
+            imap(len_slices, data_blocks),
+            DataBlocks(data, data_halo_blocks),
+            result_halos_trim):
+        each_haloed_block = dask.delayed(calculate_block)(
+            each_haloed_block, each_trim
+        )
+        each_haloed_block = dask.array.from_delayed(
+            each_haloed_block,
+            each_shape,
+            data.dtype
+        )
+
+        result[i] = each_haloed_block
+
+    result = concat_dask(result)
+
+    if blocks:
+        result_blocks = []
+        for i in data_blocks:
+            result_blocks.append(result[i])
+        result = data_blocks, result_blocks
 
     return result
 
