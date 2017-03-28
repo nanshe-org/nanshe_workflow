@@ -20,6 +20,16 @@ for each in list(sys.argv[1:]) + [
     "reg_traces.h5",
     "reg_rois.h5",
     "reg_proj.h5",
+    "reg.zarr",
+    "reg_sub.zarr",
+    "reg_f_f0.zarr",
+    "reg_wt.zarr",
+    "reg_norm.zarr",
+    "reg_dict.zarr",
+    "reg_post.zarr",
+    "reg_traces.zarr",
+    "reg_rois.zarr",
+    "reg_proj.zarr",
     "reg_proj.html"]:
     if os.path.isfile(each):
         os.remove(each)

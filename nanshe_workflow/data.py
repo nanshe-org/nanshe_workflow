@@ -2,13 +2,20 @@ __author__ = "John Kirkham <kirkhamj@janelia.hhmi.org>"
 __date__ = "$Nov 05, 2015 13:54$"
 
 
+import collections
 from contextlib import contextmanager
+import itertools
 import os
 import shutil
+import zipfile
 
 import h5py
 import numpy
+import zarr
 
+import kenjutsu.format
+
+from builtins import map
 from past.builtins import unicode
 
 
@@ -21,6 +28,99 @@ def io_remove(name):
         shutil.rmtree(name)
     else:
         raise ValueError("Unable to remove path, '%s'." % name)
+
+
+@contextmanager
+def open_zarr(name, mode="r"):
+    if not os.path.exists(name) and mode in ["a", "w"]:
+        store = zarr.DirectoryStore(name)
+        yield zarr.open_group(store, mode)
+    elif os.path.isdir(name):
+        store = zarr.DirectoryStore(name)
+        yield zarr.open_group(store, mode)
+    elif zipfile.is_zipfile(name):
+        with zarr.ZipStore(name, mode=mode, compression=0, allowZip64=True) as store:
+            yield zarr.open_group(store, mode)
+    else:
+        raise NotImplementedError("Unable to open '%s'." % name)
+
+
+def zip_zarr(name):
+    zip_ext = os.extsep + "zip"
+
+    with zipfile.ZipFile(name + zip_ext, "w"):
+        pass
+
+    with open_zarr(name + zip_ext, "w") as f1:
+        with open_zarr(name, "r") as f2:
+            f1.store.update(f2.store)
+
+    io_remove(name)
+    shutil.move(name + zip_ext, name)
+
+
+def hdf5_to_zarr(hdf5_file, zarr_file):
+    def copy(name, h5py_obj):
+        if isinstance(h5py_obj, h5py.Group):
+            zarr_obj = zarr_file.create_group(name)
+        elif isinstance(h5py_obj, h5py.Dataset):
+            zarr_obj = zarr_file.create_dataset(
+                name,
+                data=h5py_obj,
+                chunks=h5py_obj.chunks
+            )
+        else:
+            raise NotImplementedError(
+                "No Zarr type analogue for HDF5 type,"
+                " '%s'." % str(type(h5py_obj))
+            )
+
+        zarr_obj.attrs.update(h5py_obj.attrs)
+
+    hdf5_file.visititems(copy)
+
+
+def _zarr_visitvalues(group, func):
+    def _visit(obj):
+        yield obj
+
+        keys = sorted(getattr(obj, "keys", lambda: [])())
+        for each_key in keys:
+            for each_obj in _visit(obj[each_key]):
+                yield each_obj
+
+    for each_obj in itertools.islice(_visit(group), 1, None):
+        value = func(each_obj)
+        if value is not None:
+            return value
+
+
+def _zarr_visititems(group, func):
+    base_len = len(group.name)
+    return _zarr_visitvalues(
+        group, lambda o: func(o.name[base_len:].lstrip("/"), o)
+    )
+
+
+def zarr_to_hdf5(zarr_file, hdf5_file):
+    def copy(name, zarr_obj):
+        if isinstance(zarr_obj, zarr.Group):
+            h5py_obj = hdf5_file.create_group(name)
+        elif isinstance(zarr_obj, zarr.Array):
+            h5py_obj = hdf5_file.create_dataset(
+                name,
+                data=zarr_obj,
+                chunks=zarr_obj.chunks
+            )
+        else:
+            raise NotImplementedError(
+                "No HDF5 type analogue for Zarr type,"
+                " '%s'." % str(type(zarr_obj))
+            )
+
+        h5py_obj.attrs.update(zarr_obj.attrs)
+
+    _zarr_visititems(zarr_file, copy)
 
 
 class DataBlocks(object):
@@ -132,6 +232,82 @@ class LazyHDF5Dataset(LazyDataset):
     @contextmanager
     def astype(self, dtype):
         self_astype = LazyHDF5Dataset(self.filename, self.datasetname)
+        self_astype.dtype = numpy.dtype(dtype)
+
+        yield(self_astype)
+
+
+class LazyZarrDataset(LazyDataset):
+    class LazyZarrDatasetSelection(LazyDataset.LazyDatasetSelection):
+        def __getitem__(self, key):
+            with open_zarr(self.filename, "r") as filehandle:
+                dataset = filehandle[self.datasetname]
+
+                try:
+                    return(dataset[self.key][key].astype(self.dtype))
+                except TypeError:
+                    ref_key = list()
+                    for i in range(len(self.key)):
+                        each_key = self.key[i]
+                        try:
+                            each_key = list(each_key)
+                        except TypeError:
+                            pass
+                        ref_key.append(each_key)
+                    ref_key = tuple(ref_key)
+
+                    ref_key = kenjutsu.format.reformat_slices(ref_key, self.shape)
+
+                    # Verify there is only one sequence
+                    num_seqs = sum(map(
+                        lambda i: isinstance(i, collections.Sequence),
+                        ref_key
+                    ))
+                    if num_seqs > 1:
+                        raise ValueError(
+                            "Cannot take more than one sequence of integers."
+                            " Got %i instead." % num_seqs
+                        )
+                    elif num_seqs == 1:
+                        if not isinstance(ref_key[0], collections.Sequence):
+                            raise ValueError(
+                                "Sequence of integers must be first."
+                            )
+
+                    result = []
+                    for each_key in kenjutsu.format.split_indices(ref_key):
+                        result.append([dataset[each_key]])
+                    result = numpy.concatenate(result)
+
+                    return(result[key].astype(self.dtype))
+
+    def __init__(self, filename, datasetname):
+        self.filename = filename
+        self.datasetname = datasetname
+
+        with open_zarr(self.filename, "r") as filehandle:
+            dataset = filehandle[self.datasetname]
+
+            self.shape = dataset.shape
+            self.dtype = dataset.dtype
+
+        self.size = numpy.prod(self.shape)
+
+    def __getitem__(self, key):
+        return(
+            LazyZarrDataset.LazyZarrDatasetSelection(
+                self.filename,
+                self.datasetname,
+                key,
+                self.shape,
+                self.dtype,
+                self.size
+            )
+        )
+
+    @contextmanager
+    def astype(self, dtype):
+        self_astype = LazyZarrDataset(self.filename, self.datasetname)
         self_astype.dtype = numpy.dtype(dtype)
 
         yield(self_astype)
