@@ -2,9 +2,11 @@ __author__ = "John Kirkham <kirkhamj@janelia.hhmi.org>"
 __date__ = "$Nov 09, 2015 12:47$"
 
 
+from contextlib import contextmanager
 import collections
 import copy
 import gc
+import itertools
 import math
 import numbers
 import os
@@ -15,10 +17,14 @@ from psutil import cpu_count
 import numpy
 import zarr
 
+import dask
+import dask.array
+
+from builtins import map as imap
 from builtins import zip as izip
 
 from kenjutsu.measure import len_slices
-from kenjutsu.blocks import split_blocks
+from kenjutsu.blocks import num_blocks, split_blocks
 
 from metawrap.metawrap import tied_call_args, unwrap
 
@@ -123,6 +129,71 @@ def get_client(profile):
     return(client)
 
 
+@contextmanager
+def get_executor(client):
+    executor = client.become_dask()
+    try:
+        yield executor
+    finally:
+        executor.shutdown()
+
+
+def concat_dask(dask_arr):
+    n_blocks = dask_arr.shape
+
+    result = dask_arr.copy()
+    for i in range(-1, -1 - len(n_blocks), -1):
+        result2 = result[..., 0]
+        for j in itertools.product(*[
+                range(e) for e in n_blocks[:i]
+            ]):
+            result2[j] = dask.array.concatenate(
+                result[j].tolist(),
+                axis=i
+            )
+        result = result2
+    result = result[()]
+
+    return result
+
+
+def map_dask(client, calculate_block, data, block_shape, block_halo, blocks=True):
+    n_blocks = num_blocks(data.shape, block_shape)
+    block_indices, data_blocks, data_halo_blocks, result_halos_trim = split_blocks(
+        data.shape, block_shape, block_halo, index=True
+    )
+
+    result = numpy.empty(
+        n_blocks,
+        dtype=object
+    )
+    for i, each_shape, each_haloed_block, each_trim in izip(
+            block_indices,
+            imap(len_slices, data_blocks),
+            DataBlocks(data, data_halo_blocks),
+            result_halos_trim):
+        each_haloed_block = dask.delayed(calculate_block)(
+            each_haloed_block, each_trim
+        )
+        each_haloed_block = dask.array.from_delayed(
+            each_haloed_block,
+            each_shape,
+            data.dtype
+        )
+
+        result[i] = each_haloed_block
+
+    result = concat_dask(result)
+
+    if blocks:
+        result_blocks = []
+        for i in data_blocks:
+            result_blocks.append(result[i])
+        result = data_blocks, result_blocks
+
+    return result
+
+
 def map_ipyparallel(client, calculate_block, data, block_shape, block_halo):
     block_indices, data_blocks, data_halo_blocks, result_halos_trim = split_blocks(
         data.shape, block_shape, block_halo, index=True
@@ -137,6 +208,27 @@ def map_ipyparallel(client, calculate_block, data, block_shape, block_halo):
     )
 
     return data_blocks, result_blocks
+
+
+def store_dask(data_blocks, result_blocks, out):
+    tasks = []
+    lock = dask.utils.SerializableLock()
+    with lock:
+        for each_data_block, each_result_block in izip(
+            data_blocks, result_blocks
+        ):
+            r = dask.array.store(
+                each_result_block,
+                out,
+                regions=each_data_block,
+                lock=lock,
+                compute=False
+            )
+            each_task = lambda r = r: dask.compute(r)
+
+            tasks.append(each_task)
+
+    return tasks
 
 
 def store_ipyparallel(data_blocks, result_blocks, out):
@@ -257,22 +349,23 @@ def block_parallel(client, calculate_block_shape, calculate_halo):
                     len(block_halo) == len(data.shape)
                 )
 
-            calculate_block = lambda dhb, rht: zarr.array(
-                calculate(dhb[...], *new_args, **new_kwargs)[rht]
-            )
+            with get_executor(client) as executor:
+                calculate_block = lambda dhb, rht: zarr.array(
+                    calculate(dhb[...], *new_args, **new_kwargs)[rht]
+                )
 
-            data_blocks, result_blocks = map_ipyparallel(
-                client, calculate_block, data, block_shape, block_halo
-            )
+                data_blocks, result_blocks = map_ipyparallel(
+                    client, calculate_block, data, block_shape, block_halo
+                )
 
-            progress_bar = FloatProgress(min=0.0, max=1.0)
-            display(progress_bar)
-            tasks = store_ipyparallel(data_blocks, result_blocks, out)
-            for i, each_task in enumerate(tasks):
-                progress_bar.value = i / float(len(tasks))
-                each_task()
+                progress_bar = FloatProgress(min=0.0, max=1.0)
+                display(progress_bar)
+                tasks = store_ipyparallel(data_blocks, result_blocks, out)
+                for i, each_task in enumerate(tasks):
+                    progress_bar.value = i / float(len(tasks))
+                    each_task()
 
-            progress_bar.value = 1.0
+                progress_bar.value = 1.0
 
             client[:].apply(gc.collect).get()
             gc.collect()
@@ -601,13 +694,14 @@ def stack_compute_subtract_parallel(client, num_frames):
             data1.shape, block_shape
         )
 
-        calculate_block = lambda dhb, rht: (
-            (dhb[...] - data2[...])[rht]
-        )
+        with get_executor(client) as executor:
+            calculate_block = lambda dhb, rht: zarr.array(
+                (dhb[...] - data2[...])[rht]
+            )
 
-        data_blocks, result_blocks = map_ipyparallel(
-            client, calculate_block, data1, block_shape, len(data1.shape) * (0,)
-        )
+            data_blocks, result_blocks = map_ipyparallel(
+                client, calculate_block, data1, block_shape, len(data1.shape) * (0,)
+            )
 
         progress_bar = FloatProgress(min=0.0, max=1.0)
         display(progress_bar)
