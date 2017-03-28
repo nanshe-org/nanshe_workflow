@@ -4,6 +4,7 @@ __date__ = "$Nov 05, 2015 13:54$"
 
 import collections
 from contextlib import contextmanager
+import itertools
 import os
 import shutil
 import zipfile
@@ -79,6 +80,28 @@ def hdf5_to_zarr(hdf5_file, zarr_file):
     hdf5_file.visititems(copy)
 
 
+def _zarr_visitvalues(group, func):
+    def _visit(obj):
+        yield obj
+
+        keys = sorted(getattr(obj, "keys", lambda: [])())
+        for each_key in keys:
+            for each_obj in _visit(obj[each_key]):
+                yield each_obj
+
+    for each_obj in itertools.islice(_visit(group), 1, None):
+        value = func(each_obj)
+        if value is not None:
+            return value
+
+
+def _zarr_visititems(group, func):
+    base_len = len(group.name)
+    return _zarr_visitvalues(
+        group, lambda o: func(o.name[base_len:].lstrip("/"), o)
+    )
+
+
 def zarr_to_hdf5(zarr_file, hdf5_file):
     def copy(name, zarr_obj):
         if isinstance(zarr_obj, zarr.Group):
@@ -97,7 +120,7 @@ def zarr_to_hdf5(zarr_file, hdf5_file):
 
         h5py_obj.attrs.update(zarr_obj.attrs)
 
-    zarr_file.visititems(copy)
+    _zarr_visititems(zarr_file, copy)
 
 
 class DataBlocks(object):
@@ -218,10 +241,10 @@ class LazyZarrDataset(LazyDataset):
     class LazyZarrDatasetSelection(LazyDataset.LazyDatasetSelection):
         def __getitem__(self, key):
             with open_zarr(self.filename, "r") as filehandle:
-                dataset = filehandle[self.datasetname].astype(self.dtype)
+                dataset = filehandle[self.datasetname]
 
                 try:
-                    return(dataset[self.key][key])
+                    return(dataset[self.key][key].astype(self.dtype))
                 except TypeError:
                     ref_key = list()
                     for i in range(len(self.key)):
@@ -256,7 +279,7 @@ class LazyZarrDataset(LazyDataset):
                         result.append([dataset[each_key]])
                     result = numpy.concatenate(result)
 
-                    return(result[key])
+                    return(result[key].astype(self.dtype))
 
     def __init__(self, filename, datasetname):
         self.filename = filename
