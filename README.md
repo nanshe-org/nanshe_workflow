@@ -4,6 +4,8 @@
 
 # Nanshe Workflow
 
+[![Join the chat at https://gitter.im/nanshe-org/nanshe_workflow](https://badges.gitter.im/nanshe-org/nanshe_workflow.svg)](https://gitter.im/nanshe-org/nanshe_workflow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ## About
 
 Provides a [Jupyter]( http://jupyter.org/ ) workflow for running [nanshe]( https://github.com/nanshe-org/nanshe ).
