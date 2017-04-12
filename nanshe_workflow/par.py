@@ -20,8 +20,11 @@ import zarr
 import dask
 import dask.array
 
-from builtins import map as imap
-from builtins import zip as izip
+from builtins import (
+    map as imap,
+    range as irange,
+    zip as izip,
+)
 
 from kenjutsu.measure import len_slices
 from kenjutsu.blocks import num_blocks, split_blocks
@@ -142,10 +145,10 @@ def concat_dask(dask_arr):
     n_blocks = dask_arr.shape
 
     result = dask_arr.copy()
-    for i in range(-1, -1 - len(n_blocks), -1):
+    for i in irange(-1, -1 - len(n_blocks), -1):
         result2 = result[..., 0]
         for j in itertools.product(*[
-                range(e) for e in n_blocks[:i]
+                irange(e) for e in n_blocks[:i]
             ]):
             result2[j] = dask.array.concatenate(
                 result[j].tolist(),

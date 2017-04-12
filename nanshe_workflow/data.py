@@ -15,7 +15,10 @@ import zarr
 
 import kenjutsu.format
 
-from builtins import map
+from builtins import (
+    map as imap,
+    range as irange,
+)
 from past.builtins import unicode
 
 
@@ -247,7 +250,7 @@ class LazyZarrDataset(LazyDataset):
                     return(dataset[self.key][key].astype(self.dtype))
                 except TypeError:
                     ref_key = list()
-                    for i in range(len(self.key)):
+                    for i in irange(len(self.key)):
                         each_key = self.key[i]
                         try:
                             each_key = list(each_key)
@@ -259,7 +262,7 @@ class LazyZarrDataset(LazyDataset):
                     ref_key = kenjutsu.format.reformat_slices(ref_key, self.shape)
 
                     # Verify there is only one sequence
-                    num_seqs = sum(map(
+                    num_seqs = sum(imap(
                         lambda i: isinstance(i, collections.Sequence),
                         ref_key
                     ))
