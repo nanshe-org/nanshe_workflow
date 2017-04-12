@@ -1,2 +1,2 @@
 [filter "clean_nb"]
-	clean = jq '(.cells[] | select(has(\"outputs\")) | .outputs) = [] | (.cells[] | select(has(\"execution_count\")) | .execution_count) = null | (.metadata.widgets | select(has(\"state\")) | .state) = {}'
+	clean = jq '(.cells[] | select(has(\"metadata\")) | .metadata) = {} | (.cells[] | select(has(\"outputs\")) | .outputs) = [] | (.cells[] | select(has(\"execution_count\")) | .execution_count) = null | (.metadata.widgets | select(has(\"state\")) | .state) = {}'
