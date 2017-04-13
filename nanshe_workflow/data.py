@@ -5,13 +5,19 @@ __date__ = "$Nov 05, 2015 13:54$"
 import collections
 from contextlib import contextmanager
 import itertools
+import glob
 import os
 import shutil
 import zipfile
 
 import h5py
 import numpy
+import pims
 import zarr
+
+import dask
+import dask.array
+import dask.delayed
 
 import kenjutsu.format
 
@@ -31,6 +37,30 @@ def io_remove(name):
         shutil.rmtree(name)
     else:
         raise ValueError("Unable to remove path, '%s'." % name)
+
+
+def dask_imread(fn):
+    a = []
+    for each_fn in glob.iglob(fn):
+        with pims.open(fn) as imgs:
+            shape = (len(imgs),) + imgs.frame_shape
+            dtype = numpy.dtype(imgs.pixel_type)
+
+        def _read_frame(fn, i):
+            with pims.open(fn) as imgs:
+                return imgs[i]
+
+        a.append([])
+        for i in irange(shape[0]):
+            a[-1].append(dask.array.from_delayed(
+                dask.delayed(_read_frame)(fn, i),
+                shape[1:],
+                dtype
+            ))
+        a[-1] = dask.array.stack(a[-1])
+    a = dask.array.concatenate(a)
+
+    return a
 
 
 @contextmanager
