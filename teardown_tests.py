@@ -10,6 +10,7 @@ if not os.environ.get("TEST_NOTEBOOKS"):
     sys.exit(0)
 
 for each in list(sys.argv[1:]) + [
+    "reg.tif",
     "reg.h5",
     "reg_sub.h5",
     "reg_f_f0.h5",

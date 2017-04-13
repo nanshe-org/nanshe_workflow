@@ -28,6 +28,8 @@ requirements:
     - distributed
     - runipy
     - cloudpickle
+    - pims
+    - tifffile
     - imgroi
     - kenjutsu >=0.5.0
     - metawrap
