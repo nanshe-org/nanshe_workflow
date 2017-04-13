@@ -23,6 +23,8 @@ registered_callables.py
 
 # Ignore any data.
 *.h5
+*.tif
+*.tiff
 *.zarr
 *_proj.html
 
