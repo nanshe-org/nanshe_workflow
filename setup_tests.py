@@ -6,7 +6,7 @@ import os
 import sys
 
 import numpy
-import h5py
+import tifffile
 
 from builtins import range as irange
 
@@ -71,5 +71,6 @@ for i in irange(len(bases_images)):
 image_stack *= numpy.iinfo(numpy.uint16).max / image_stack.max()
 image_stack = image_stack.astype(numpy.uint16)
 
-with h5py.File("reg.h5", "w") as f:
-    f["images"] = image_stack
+with tifffile.TiffWriter("reg.tif", bigtiff=True) as f:
+    for i in irange(len(image_stack)):
+        f.save(image_stack[i])
