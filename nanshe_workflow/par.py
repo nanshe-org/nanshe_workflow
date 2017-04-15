@@ -31,7 +31,7 @@ from kenjutsu.blocks import num_blocks, split_blocks
 
 from metawrap.metawrap import tied_call_args, unwrap
 
-from nanshe_workflow.data import DataBlocks
+from nanshe_workflow.data import concat_dask, DataBlocks
 from nanshe_workflow.ipy import Client, display, FloatProgress
 
 
@@ -139,25 +139,6 @@ def get_executor(client):
         yield executor
     finally:
         executor.shutdown()
-
-
-def concat_dask(dask_arr):
-    n_blocks = dask_arr.shape
-
-    result = dask_arr.copy()
-    for i in irange(-1, -1 - len(n_blocks), -1):
-        result2 = result[..., 0]
-        for j in itertools.product(*[
-                irange(e) for e in n_blocks[:i]
-            ]):
-            result2[j] = dask.array.concatenate(
-                result[j].tolist(),
-                axis=i
-            )
-        result = result2
-    result = result[()]
-
-    return result
 
 
 def map_dask(client, calculate_block, data, block_shape, block_halo, blocks=True):

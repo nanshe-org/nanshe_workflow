@@ -21,9 +21,13 @@ import dask.delayed
 
 import kenjutsu.format
 
+from kenjutsu.measure import len_slices
+from kenjutsu.blocks import num_blocks, split_blocks
+
 from builtins import (
     map as imap,
     range as irange,
+    zip as izip,
 )
 from past.builtins import unicode
 
@@ -37,6 +41,50 @@ def io_remove(name):
         shutil.rmtree(name)
     else:
         raise ValueError("Unable to remove path, '%s'." % name)
+
+
+def concat_dask(dask_arr):
+    n_blocks = dask_arr.shape
+
+    result = dask_arr.copy()
+    for i in irange(-1, -1 - len(n_blocks), -1):
+        result2 = result[..., 0]
+        for j in itertools.product(*[
+                irange(e) for e in n_blocks[:i]
+            ]):
+            result2[j] = dask.array.concatenate(
+                result[j].tolist(),
+                axis=i
+            )
+        result = result2
+    result = result[()]
+
+    return result
+
+
+def dask_load_hdf5(fn, dn):
+    with h5py.File(fn) as fh:
+        shape = fh[dn].shape
+        dtype = fh[dn].dtype
+        chunks = fh[dn].chunks
+
+    def _read_chunk(fn, dn, idx):
+        with h5py.File(fn) as fh:
+            return fh[dn][idx]
+
+    a = numpy.empty(
+        num_blocks(shape, chunks),
+        dtype=object
+    )
+    for i, s in izip(*split_blocks(shape, chunks, index=True)[:2]):
+        a[i] = dask.array.from_delayed(
+            dask.delayed(_read_chunk)(fn, dn, s),
+            len_slices(s),
+            dtype
+        )
+    a = concat_dask(a)
+
+    return a
 
 
 def dask_imread(fn):
