@@ -96,16 +96,16 @@ def dask_imread(fn):
 
         def _read_frame(fn, i):
             with pims.open(fn) as imgs:
-                return imgs[i]
+                return numpy.asanyarray(imgs[i])
 
         a.append([])
         for i in irange(shape[0]):
             a[-1].append(dask.array.from_delayed(
-                dask.delayed(_read_frame)(fn, i),
-                shape[1:],
+                dask.delayed(_read_frame)(fn, slice(i, i + 1)),
+                (1,) + shape[1:],
                 dtype
             ))
-        a[-1] = dask.array.stack(a[-1])
+        a[-1] = dask.array.concatenate(a[-1])
     a = dask.array.concatenate(a)
 
     return a
