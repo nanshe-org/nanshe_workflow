@@ -6,6 +6,7 @@ import collections
 from contextlib import contextmanager
 import itertools
 import glob
+import numbers
 import os
 import shutil
 import zipfile
@@ -62,11 +63,12 @@ def concat_dask(dask_arr):
     return result
 
 
-def dask_load_hdf5(fn, dn):
+def dask_load_hdf5(fn, dn, chunks=None):
     with h5py.File(fn) as fh:
         shape = fh[dn].shape
         dtype = fh[dn].dtype
-        chunks = fh[dn].chunks
+        if chunks is None:
+            chunks = fh[dn].chunks
 
     def _read_chunk(fn, dn, idx):
         with h5py.File(fn) as fh:
@@ -87,7 +89,12 @@ def dask_load_hdf5(fn, dn):
     return a
 
 
-def dask_imread(fn):
+def dask_imread(fn, nframes=1):
+    if not isinstance(nframes, numbers.Integral):
+        raise ValueError("`nframes` must be an integer.")
+    if not (nframes > 0):
+        raise ValueError("`nframes` must be greater than zero.")
+
     a = []
     for each_fn in glob.iglob(fn):
         with pims.open(fn) as imgs:
@@ -98,11 +105,18 @@ def dask_imread(fn):
             with pims.open(fn) as imgs:
                 return numpy.asanyarray(imgs[i])
 
+        lower_iter, upper_iter = itertools.tee(itertools.chain(
+            irange(0, shape[0], nframes),
+            [shape[0]]
+        ))
+
+        next(upper_iter)
+
         a.append([])
-        for i in irange(shape[0]):
+        for i, j in izip(lower_iter, upper_iter):
             a[-1].append(dask.array.from_delayed(
-                dask.delayed(_read_frame)(fn, slice(i, i + 1)),
-                (1,) + shape[1:],
+                dask.delayed(_read_frame)(fn, slice(i, j)),
+                (j - i,) + shape[1:],
                 dtype
             ))
         a[-1] = dask.array.concatenate(a[-1])
