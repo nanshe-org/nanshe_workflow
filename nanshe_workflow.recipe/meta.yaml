@@ -27,6 +27,7 @@ requirements:
     - dask
     - distributed
     - dask-ndfilters
+    - dask-ndfourier
     - runipy
     - cloudpickle
     - pims
