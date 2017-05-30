@@ -138,7 +138,7 @@ def get_executor(client):
     try:
         yield executor
     finally:
-        executor.shutdown()
+        client.stop_dask()
 
 
 def map_dask(client, calculate_block, data, block_shape, block_halo, blocks=True):
