@@ -26,6 +26,8 @@ requirements:
     - ipywidgets
     - dask
     - distributed
+    - dask-ndfilters
+    - dask-ndfourier
     - runipy
     - cloudpickle
     - pims
