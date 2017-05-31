@@ -39,8 +39,6 @@ requirements:
     - xnumpy
     - yail
     - zarr
-    # Testing
-    - mock
 
 about:
   home: {{ data.get("url") }}
