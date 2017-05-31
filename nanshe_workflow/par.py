@@ -138,6 +138,7 @@ def get_executor(client):
     try:
         yield executor
     finally:
+        executor.shutdown()
         client.stop_dask()
 
 
