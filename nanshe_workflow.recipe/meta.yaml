@@ -26,6 +26,7 @@ requirements:
     - ipywidgets
     - dask
     - distributed
+    - dask-imread
     - dask-ndfilters
     - dask-ndfourier
     - runipy
