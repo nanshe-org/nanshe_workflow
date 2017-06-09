@@ -13,7 +13,6 @@ import zipfile
 
 import h5py
 import numpy
-import pims
 import zarr
 
 import dask
@@ -85,42 +84,6 @@ def dask_load_hdf5(fn, dn, chunks=None):
             dtype
         )
     a = concat_dask(a)
-
-    return a
-
-
-def dask_imread(fn, nframes=1):
-    if not isinstance(nframes, numbers.Integral):
-        raise ValueError("`nframes` must be an integer.")
-    if not (nframes > 0):
-        raise ValueError("`nframes` must be greater than zero.")
-
-    a = []
-    for each_fn in glob.iglob(fn):
-        with pims.open(fn) as imgs:
-            shape = (len(imgs),) + imgs.frame_shape
-            dtype = numpy.dtype(imgs.pixel_type)
-
-        def _read_frame(fn, i):
-            with pims.open(fn) as imgs:
-                return numpy.asanyarray(imgs[i])
-
-        lower_iter, upper_iter = itertools.tee(itertools.chain(
-            irange(0, shape[0], nframes),
-            [shape[0]]
-        ))
-
-        next(upper_iter)
-
-        a.append([])
-        for i, j in izip(lower_iter, upper_iter):
-            a[-1].append(dask.array.from_delayed(
-                dask.delayed(_read_frame)(fn, slice(i, j)),
-                (j - i,) + shape[1:],
-                dtype
-            ))
-        a[-1] = dask.array.concatenate(a[-1])
-    a = dask.array.concatenate(a)
 
     return a
 

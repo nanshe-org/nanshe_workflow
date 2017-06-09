@@ -26,11 +26,11 @@ requirements:
     - ipywidgets
     - dask
     - distributed
+    - dask-imread
     - dask-ndfilters
     - dask-ndfourier
     - runipy
     - cloudpickle
-    - pims
     - tifffile
     - imgroi
     - kenjutsu >=0.5.0
