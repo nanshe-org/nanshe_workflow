@@ -12,6 +12,7 @@ if not os.environ.get("TEST_NOTEBOOKS"):
 for each in list(sys.argv[1:]) + [
     "reg.tif",
     "reg.h5",
+    "reg_trim.h5",
     "reg_dn.h5",
     "reg_sub.h5",
     "reg_f_f0.h5",
@@ -23,6 +24,7 @@ for each in list(sys.argv[1:]) + [
     "reg_rois.h5",
     "reg_proj.h5",
     "reg.zarr",
+    "reg_trim.zarr",
     "reg_dn.zarr",
     "reg_sub.zarr",
     "reg_f_f0.zarr",
