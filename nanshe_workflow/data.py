@@ -13,6 +13,7 @@ import zipfile
 
 import h5py
 import numpy
+import tifffile
 import zarr
 
 import dask
@@ -86,6 +87,14 @@ def dask_load_hdf5(fn, dn, chunks=None):
     a = concat_dask(a)
 
     return a
+
+
+def save_tiff(fn, a):
+    if os.path.exists(fn):
+        os.remove(fn)
+    with tifffile.TiffWriter(fn, bigtiff=True) as tif:
+        for i in irange(a.shape[0]):
+            tif.save(numpy.array(a[i]))
 
 
 @contextmanager
