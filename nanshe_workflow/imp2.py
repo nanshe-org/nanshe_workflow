@@ -1,3 +1,6 @@
+from __future__ import division
+
+
 __author__ = "John Kirkham <kirkhamj@janelia.hhmi.org>"
 __date__ = "$Aug 09, 2017 17:12$"
 
@@ -135,3 +138,57 @@ def wavelet_transform(im0,
     )
 
     return(result)
+
+
+def normalize_data(new_data, **parameters):
+    """
+        Compute halo for ``normalize_data`` given parameters.
+
+        Notes:
+            Shape and dtype refer to the data to be used as input. See
+            ``wavelet_transform`` documentation for other parameters.
+
+        Returns:
+            tuple of ints:         Half halo shape to be tacked on to the data.
+    """
+
+    if "out" in parameters:
+        raise TypeError("Got an unexpected keyword argument 'out'.")
+
+    ord = parameters.get("renormalized_images", {}).get("ord", 2)
+
+    if ord is None:
+        ord = 2
+
+    new_data_means = new_data.mean(
+        axis=tuple(irange(1, new_data.ndim)),
+        keepdims=True
+    )
+
+    new_data_zeroed = new_data - new_data_means
+
+    if ord == 0:
+        new_data_norms = (
+            (new_data_zeroed != 0).astype(new_data_zeroed.dtype).sum(
+                axis=tuple(irange(1, new_data.ndim)), keepdims=True
+            )
+        )
+    elif ord == numpy.inf:
+        new_data_norms = abs(new_data_zeroed).max(
+            axis=tuple(irange(1, new_data.ndim)), keepdims=True
+        )
+    elif ord == -numpy.inf:
+        new_data_norms = abs(new_data_zeroed).min(
+            axis=tuple(irange(1, new_data.ndim)), keepdims=True
+        )
+    else:
+        new_data_norms = (
+            (abs(new_data_zeroed) ** ord).sum(
+                axis=tuple(irange(1, new_data.ndim)), keepdims=True
+            )
+            ** (1.0 / ord)
+        )
+
+    new_data_renormed = new_data_zeroed / new_data_norms
+
+    return(new_data_renormed)
