@@ -83,3 +83,29 @@ def compute_moment_projections(data, num_moment):
     moments = (data[None].repeat(num_moment, axis=0) ** mom_range).mean(axis=1)
 
     return moments
+
+
+def compute_adj_harmonic_mean_projection(data):
+    """
+        Compute the adjusted harmonic mean projection of the data.
+
+        Shifts the data positively to avoid issues with negative or zero
+        values that could cause strange results.
+
+        Args:
+            data(array):        Dask Array of image data
+
+        Returns:
+            Dask Array:         Adjusted harmonic mean projection
+    """
+
+    if not issubclass(data.real.dtype.type, numpy.floating):
+        data = data.astype(float)
+
+    data_shift = data.min() - data.dtype.type(1)
+
+    data_adj_inv = dask.array.reciprocal(data - data_shift)
+    data_adj_inv_mean = data_adj_inv.mean(axis=0)
+    data_adj_hmean = dask.array.reciprocal(data_adj_inv_mean) + data_shift
+
+    return data_adj_hmean
