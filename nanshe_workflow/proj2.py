@@ -2,6 +2,8 @@ __author__ = "John Kirkham <kirkhamj@janelia.hhmi.org>"
 __date__ = "$Aug 14, 2017 09:52$"
 
 
+import dask
+import dask.array
 import numpy
 
 
@@ -58,3 +60,26 @@ def compute_max_projection(data):
     """
 
     return data.max(axis=0)
+
+
+def compute_moment_projections(data, num_moment):
+    """
+        Compute the moment projections of the data.
+
+        Args:
+            data(array):        Dask Array of image data
+            num_moment(int):    number of moments to compute
+
+        Returns:
+            Dask Array:         Moment projections
+    """
+
+    if not issubclass(data.real.dtype.type, numpy.floating):
+        data = data.astype(float)
+
+    mom_range = dask.array.arange(num_moment, chunks=(1,))
+    mom_range = mom_range[(Ellipsis,) + data.ndim * (None,)]
+
+    moments = (data[None].repeat(num_moment, axis=0) ** mom_range).mean(axis=1)
+
+    return moments
