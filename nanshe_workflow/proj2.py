@@ -30,3 +30,17 @@ def compute_traces(imagestack, rois):
     )
 
     return traces
+
+
+def compute_min_projection(data):
+    """
+        Compute the minimum projection of the data.
+
+        Args:
+            data(array):      Dask Array of image data
+
+        Returns:
+            Dask Array:       Minimum projection
+    """
+
+    return data.min(axis=0)
