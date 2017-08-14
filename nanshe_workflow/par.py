@@ -646,66 +646,6 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
     return(build_block_parallel)
 
 
-def stack_compute_subtract_parallel(client, num_frames):
-    """
-        Subtract an image by a frame.
-
-        Args:
-            client(Client):       client to send computations to.
-
-            num_frames(int):      number of frames to compute at a time (
-                                  similar to block size).
-
-        Returns:
-            callable:             parallelized callable.
-    """
-
-
-    def wrapper(data1, data2, out=None):
-        client[:].apply(gc.collect).get()
-        gc.collect()
-
-        data2 = data2[...]
-
-        if out is None:
-            out = numpy.empty(
-                data1.shape,
-                data1.dtype
-            )
-
-        block_shape = (num_frames,) + data1.shape[1:]
-
-        data_blocks, data_halo_blocks, result_halos_trim = split_blocks(
-            data1.shape, block_shape
-        )
-
-        with get_executor(client) as executor:
-            calculate_block = lambda dhb, rht: zarr.array(
-                (dhb[...] - data2[...])[rht]
-            )
-
-            data_blocks, result_blocks = map_ipyparallel(
-                client, calculate_block, data1, block_shape, len(data1.shape) * (0,)
-            )
-
-        progress_bar = FloatProgress(min=0.0, max=1.0)
-        display(progress_bar)
-        for i, (each_data_block, each_result_block) in enumerate(
-                izip(data_blocks, result_blocks)
-        ):
-            progress_bar.value = i / float(len(result_blocks))
-            out[each_data_block] = each_result_block[...]
-
-        progress_bar.value = 1.0
-
-        client[:].apply(gc.collect).get()
-        gc.collect()
-
-        return(out)
-
-    return(wrapper)
-
-
 def shape_block_generate_dictionary_parallel(client):
     """
         Same as ``block_generate_dictionary_parallel``, but with restructured
