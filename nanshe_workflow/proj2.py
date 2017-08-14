@@ -1,6 +1,10 @@
+from __future__ import division
+
 __author__ = "John Kirkham <kirkhamj@janelia.hhmi.org>"
 __date__ = "$Aug 14, 2017 09:52$"
 
+
+import numbers
 
 import dask
 import dask.array
@@ -109,3 +113,53 @@ def compute_adj_harmonic_mean_projection(data):
     data_adj_hmean = dask.array.reciprocal(data_adj_inv_mean) + data_shift
 
     return data_adj_hmean
+
+
+def norm_layer(data, out_dtype):
+    """
+        Compute data rescaled using the bounds of the output type.
+
+        Args:
+            data(array):        Dask Array of image data
+            out_dtype(type):    type of the data to output
+
+        Returns:
+            Dask Array:         Adjusted harmonic mean projection
+    """
+
+    out = data.astype(float)
+    out_dtype = numpy.dtype(out_dtype)
+
+    data_min = data.min()
+    data_max = data.max()
+
+    out_nan = float("nan")
+    out_min = float(0)
+    out_max = float(1)
+    if issubclass(out_dtype.type, numbers.Integral):
+        out_dtype_info = numpy.iinfo(out_dtype.type)
+
+        out_nan = float(0)
+        out_min = float(out_dtype_info.min)
+        out_max = float(out_dtype_info.max)
+
+    scale = (out_max - out_min) / (data_max - data_min)
+
+    out -= data_min
+    out *= scale
+    out += out_min
+
+    out = dask.array.clip(out, out_min, out_max)
+
+    out_isnan = dask.array.isnan(out)
+    out_isinf = dask.array.isinf(out)
+    out_sign = dask.array.sign(out)
+
+    out[out_isinf & (out_sign == -1)] = out_min
+    out[out_isinf & (out_sign == 1)] = out_max
+
+    out[out_isnan] = out_nan
+
+    out = out.astype(out_dtype)
+
+    return out
