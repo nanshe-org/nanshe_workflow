@@ -44,3 +44,17 @@ def compute_min_projection(data):
     """
 
     return data.min(axis=0)
+
+
+def compute_max_projection(data):
+    """
+        Compute the maximum projection of the data.
+
+        Args:
+            data(array):      Dask Array of image data
+
+        Returns:
+            Dask Array:       Minimum projection
+    """
+
+    return data.max(axis=0)
