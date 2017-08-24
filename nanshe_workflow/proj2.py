@@ -26,10 +26,7 @@ def compute_traces(imagestack, rois):
     if not issubclass(imagestack.real.dtype.type, numpy.floating):
         imagestack = imagestack.astype(float)
 
-    traces = (
-        rois[:, None].repeat(len(imagestack), axis=1) *
-        imagestack[None].repeat(len(rois), axis=0)
-    )
+    traces = rois[:, None] * imagestack[None]
     traces = (
         traces.sum(axis=tuple(range(2, traces.ndim))) /
         rois.sum(axis=tuple(range(1, rois.ndim)))[:, None]
