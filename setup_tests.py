@@ -71,6 +71,11 @@ for i in irange(len(bases_images)):
 image_stack *= numpy.iinfo(numpy.uint16).max / image_stack.max()
 image_stack = image_stack.astype(numpy.uint16)
 
+image_stack[:, :5, :] = 50000
+image_stack[:, -5:, :] = 50000
+image_stack[:, :, :5] = 50000
+image_stack[:, :, -5:] = 50000
+
 with tifffile.TiffWriter("data.tif", bigtiff=True) as f:
     for i in irange(len(image_stack)):
         f.save(image_stack[i])
