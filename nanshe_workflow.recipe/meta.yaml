@@ -16,6 +16,7 @@ requirements:
     - setuptools
   run:
     - python
+    - numpy
     - psutil
     - nanshe >=0.1.0a54
     - bokeh >=0.12.4
@@ -24,7 +25,7 @@ requirements:
     - notebook
     - ipyparallel
     - ipywidgets
-    - dask
+    - dask-core
     - distributed
     - dask-imread
     - dask-ndfilters
