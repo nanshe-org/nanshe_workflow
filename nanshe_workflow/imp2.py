@@ -199,24 +199,10 @@ def normalize_data(new_data, **parameters):
     if "out" in parameters:
         raise TypeError("Got an unexpected keyword argument 'out'.")
 
-    ord = parameters.get("renormalized_images", {}).get("ord", 2)
-
-    if ord is None:
-        ord = 2
-
     new_data_zeroed = zeroed_mean_images(new_data)
 
-    new_data_norms = dask.array.linalg.norm(
-        new_data_zeroed.reshape((len(new_data_zeroed), -1)),
-        ord=ord,
-        axis=1
-    )
-    new_data_norms = new_data_norms[
-        (slice(None),) + (new_data_zeroed.ndim - new_data_norms.ndim) * (None,)
-    ]
-
-    new_data_renormed = dask.array.where(
-        new_data_norms != 0, new_data_zeroed / new_data_norms, new_data_zeroed
+    new_data_renormed = renormalized_images(
+        new_data_zeroed, **parameters.get("renormalized_images", {})
     )
 
     return(new_data_renormed)
