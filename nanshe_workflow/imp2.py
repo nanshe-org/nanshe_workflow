@@ -140,6 +140,26 @@ def wavelet_transform(im0,
     return(result)
 
 
+def zeroed_mean_images(new_data):
+    """
+        Compute ``zeroed_mean_images`` on Dask Arrays.
+
+        See the nanshe function for more details
+
+        Returns:
+            Dask Array:    A lazily computed result.
+    """
+
+    new_data_means = new_data.mean(
+        axis=tuple(irange(1, new_data.ndim)),
+        keepdims=True
+    )
+
+    new_data_zeroed = new_data - new_data_means
+
+    return new_data_zeroed
+
+
 def normalize_data(new_data, **parameters):
     """
         Compute ``normalize_data`` on Dask Arrays.
