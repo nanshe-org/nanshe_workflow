@@ -11,6 +11,7 @@ import numpy
 
 import dask
 import dask.array
+import dask.array.linalg
 
 from builtins import range as irange
 
@@ -170,27 +171,14 @@ def normalize_data(new_data, **parameters):
 
     new_data_zeroed = new_data - new_data_means
 
-    if ord == 0:
-        new_data_norms = (
-            (new_data_zeroed != 0).astype(new_data_zeroed.dtype).sum(
-                axis=tuple(irange(1, new_data.ndim)), keepdims=True
-            )
-        )
-    elif ord == numpy.inf:
-        new_data_norms = abs(new_data_zeroed).max(
-            axis=tuple(irange(1, new_data.ndim)), keepdims=True
-        )
-    elif ord == -numpy.inf:
-        new_data_norms = abs(new_data_zeroed).min(
-            axis=tuple(irange(1, new_data.ndim)), keepdims=True
-        )
-    else:
-        new_data_norms = (
-            (abs(new_data_zeroed) ** ord).sum(
-                axis=tuple(irange(1, new_data.ndim)), keepdims=True
-            )
-            ** (1.0 / ord)
-        )
+    new_data_norms = dask.array.linalg.norm(
+        new_data_zeroed.reshape((len(new_data_zeroed), -1)),
+        ord=ord,
+        axis=1
+    )
+    new_data_norms = new_data_norms[
+        (slice(None),) + (new_data_zeroed.ndim - new_data_norms.ndim) * (None,)
+    ]
 
     new_data_renormed = dask.array.where(
         new_data_norms != 0, new_data_zeroed / new_data_norms, new_data_zeroed
