@@ -9,6 +9,9 @@ import itertools
 
 import numpy
 
+import dask
+import dask.array
+
 from builtins import range as irange
 
 from nanshe.imp.filters.wavelet import transform as _wavelet_transform
@@ -189,6 +192,8 @@ def normalize_data(new_data, **parameters):
             ** (1.0 / ord)
         )
 
-    new_data_renormed = new_data_zeroed / new_data_norms
+    new_data_renormed = dask.array.where(
+        new_data_norms != 0, new_data_zeroed / new_data_norms, new_data_zeroed
+    )
 
     return(new_data_renormed)
