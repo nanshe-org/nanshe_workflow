@@ -30,14 +30,12 @@ def extract_f0(new_data,
                return_f0=False,
                **parameters):
     """
-        Compute halo for ``extract_f0`` given parameters.
+        Compute ``extract_f0`` on Dask Arrays.
 
-        Notes:
-            Shape and dtype refer to the data to be used as input. See
-            ``extract_f0`` documentation for other parameters.
+        See the nanshe function for more details
 
         Returns:
-            tuple of ints:         Half halo shape to be tacked on to the data.
+            Dask Array:    A lazily computed result.
     """
 
     if "out" in parameters:
@@ -95,14 +93,12 @@ def extract_f0(new_data,
 def wavelet_transform(im0,
                       scale=5):
     """
-        Compute halo for ``wavelet_transform`` given parameters.
+        Compute ``wavelet_transform`` on Dask Arrays.
 
-        Notes:
-            Shape and dtype refer to the data to be used as input. See
-            ``wavelet_transform`` documentation for other parameters.
+        See the nanshe function for more details
 
         Returns:
-            tuple of ints:         Half halo shape to be tacked on to the data.
+            Dask Array:    A lazily computed result.
     """
 
     im0 = im0.astype(numpy.float32)
@@ -146,14 +142,12 @@ def wavelet_transform(im0,
 
 def normalize_data(new_data, **parameters):
     """
-        Compute halo for ``normalize_data`` given parameters.
+        Compute ``normalize_data`` on Dask Arrays.
 
-        Notes:
-            Shape and dtype refer to the data to be used as input. See
-            ``wavelet_transform`` documentation for other parameters.
+        See the nanshe function for more details
 
         Returns:
-            tuple of ints:         Half halo shape to be tacked on to the data.
+            Dask Array:    A lazily computed result.
     """
 
     if "out" in parameters:
