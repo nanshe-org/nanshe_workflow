@@ -160,6 +160,32 @@ def zeroed_mean_images(new_data):
     return new_data_zeroed
 
 
+def renormalized_images(input_array, ord=2):
+    """
+        Compute ``renormalized_images`` on Dask Arrays.
+
+        See the nanshe function for more details
+
+        Returns:
+            Dask Array:    A lazily computed result.
+    """
+
+    input_array_norms = dask.array.linalg.norm(
+        input_array.reshape((len(input_array), -1)),
+        ord=ord,
+        axis=1
+    )
+    input_array_norms = input_array_norms[
+        (slice(None),) + (input_array.ndim - input_array_norms.ndim) * (None,)
+    ]
+
+    input_array_renormed = dask.array.where(
+        input_array_norms != 0, input_array / input_array_norms, input_array
+    )
+
+    return(input_array_renormed)
+
+
 def normalize_data(new_data, **parameters):
     """
         Compute ``normalize_data`` on Dask Arrays.
