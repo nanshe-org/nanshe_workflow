@@ -178,12 +178,7 @@ def normalize_data(new_data, **parameters):
     if ord is None:
         ord = 2
 
-    new_data_means = new_data.mean(
-        axis=tuple(irange(1, new_data.ndim)),
-        keepdims=True
-    )
-
-    new_data_zeroed = new_data - new_data_means
+    new_data_zeroed = zeroed_mean_images(new_data)
 
     new_data_norms = dask.array.linalg.norm(
         new_data_zeroed.reshape((len(new_data_zeroed), -1)),
