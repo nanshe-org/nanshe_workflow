@@ -140,6 +140,52 @@ def wavelet_transform(im0,
     return(result)
 
 
+def zeroed_mean_images(new_data):
+    """
+        Compute ``zeroed_mean_images`` on Dask Arrays.
+
+        See the nanshe function for more details
+
+        Returns:
+            Dask Array:    A lazily computed result.
+    """
+
+    new_data_means = new_data.mean(
+        axis=tuple(irange(1, new_data.ndim)),
+        keepdims=True
+    )
+
+    new_data_zeroed = new_data - new_data_means
+
+    return new_data_zeroed
+
+
+def renormalized_images(input_array, ord=2):
+    """
+        Compute ``renormalized_images`` on Dask Arrays.
+
+        See the nanshe function for more details
+
+        Returns:
+            Dask Array:    A lazily computed result.
+    """
+
+    input_array_norms = dask.array.linalg.norm(
+        input_array.reshape((len(input_array), -1)),
+        ord=ord,
+        axis=1
+    )
+    input_array_norms = input_array_norms[
+        (slice(None),) + (input_array.ndim - input_array_norms.ndim) * (None,)
+    ]
+
+    input_array_renormed = dask.array.where(
+        input_array_norms != 0, input_array / input_array_norms, input_array
+    )
+
+    return(input_array_renormed)
+
+
 def normalize_data(new_data, **parameters):
     """
         Compute ``normalize_data`` on Dask Arrays.
@@ -153,29 +199,10 @@ def normalize_data(new_data, **parameters):
     if "out" in parameters:
         raise TypeError("Got an unexpected keyword argument 'out'.")
 
-    ord = parameters.get("renormalized_images", {}).get("ord", 2)
+    new_data_zeroed = zeroed_mean_images(new_data)
 
-    if ord is None:
-        ord = 2
-
-    new_data_means = new_data.mean(
-        axis=tuple(irange(1, new_data.ndim)),
-        keepdims=True
-    )
-
-    new_data_zeroed = new_data - new_data_means
-
-    new_data_norms = dask.array.linalg.norm(
-        new_data_zeroed.reshape((len(new_data_zeroed), -1)),
-        ord=ord,
-        axis=1
-    )
-    new_data_norms = new_data_norms[
-        (slice(None),) + (new_data_zeroed.ndim - new_data_norms.ndim) * (None,)
-    ]
-
-    new_data_renormed = dask.array.where(
-        new_data_norms != 0, new_data_zeroed / new_data_norms, new_data_zeroed
+    new_data_renormed = renormalized_images(
+        new_data_zeroed, **parameters.get("renormalized_images", {})
     )
 
     return(new_data_renormed)
