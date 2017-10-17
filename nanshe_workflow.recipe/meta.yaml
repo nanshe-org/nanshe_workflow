@@ -25,6 +25,7 @@ requirements:
     - notebook
     - ipyparallel
     - ipywidgets
+    - jupyter_contrib_nbextensions
     - dask-core
     - toolz >=0.7.3
     - distributed
