@@ -115,6 +115,7 @@ def open_zarr(name, mode="r"):
 def zip_zarr(name):
     zip_ext = os.extsep + "zip"
 
+    io_remove(name + zip_ext)
     with zipfile.ZipFile(name + zip_ext, "w"):
         pass
 
