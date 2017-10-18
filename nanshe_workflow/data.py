@@ -114,16 +114,16 @@ def open_zarr(name, mode="r"):
 
 def zip_zarr(name):
     zip_ext = os.extsep + "zip"
+    name_z = name + zip_ext
 
-    with zipfile.ZipFile(name + zip_ext, "w"):
-        pass
+    io_remove(name_z)
 
-    with open_zarr(name + zip_ext, "w") as f1:
+    with zarr.ZipStore(name_z, mode="w", compression=0, allowZip64=True) as f1:
         with open_zarr(name, "r") as f2:
-            f1.store.update(f2.store)
+            f1.update(f2.store)
 
     io_remove(name)
-    shutil.move(name + zip_ext, name)
+    shutil.move(name_z, name)
 
 
 def hdf5_to_zarr(hdf5_file, zarr_file):
