@@ -117,12 +117,10 @@ def zip_zarr(name):
     name_z = name + zip_ext
 
     io_remove(name_z)
-    with zipfile.ZipFile(name_z, "w"):
-        pass
 
-    with open_zarr(name_z, "w") as f1:
+    with zarr.ZipStore(name_z, mode="w", compression=0, allowZip64=True) as f1:
         with open_zarr(name, "r") as f2:
-            f1.store.update(f2.store)
+            f1.update(f2.store)
 
     io_remove(name)
     shutil.move(name_z, name)
