@@ -118,13 +118,9 @@ def zip_zarr(name):
 
     io_remove(name_z)
 
-    # Opening in append mode to workaround a bug in `flush`.
-    # xref: https://github.com/alimanfoo/zarr/issues/158
-    with zarr.ZipStore(name_z, mode="a", compression=0, allowZip64=True) as f1:
+    with zarr.ZipStore(name_z, mode="w", compression=0, allowZip64=True) as f1:
         with open_zarr(name, "r") as f2:
-            for k in f2.store.keys():
-                f1[k] = f2.store[k]
-                f1.flush()
+            f1.update(f2.store)
 
     io_remove(name)
     shutil.move(name_z, name)
