@@ -134,15 +134,7 @@ def open_zarr(name, mode="r"):
 
 
 def zip_zarr(name):
-    zip_ext = os.extsep + "zip"
-    name_z = name + zip_ext
-
-    io_remove(name_z)
-
-    with zarr.ZipStore(name_z, mode="w", compression=0, allowZip64=True) as f1:
-        with open_zarr(name, "r") as f2:
-            f1.update(f2.store)
-
+    name_z = zip_dir(name)
     io_remove(name)
     shutil.move(name_z, name)
 
