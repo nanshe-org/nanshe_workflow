@@ -44,6 +44,27 @@ def io_remove(name):
         raise ValueError("Unable to remove path, '%s'." % name)
 
 
+def zip_dir(dirname, compression=zipfile.ZIP_STORED, allowZip64=True):
+    dirname = os.path.abspath(dirname)
+    zipname = dirname + os.extsep + "zip"
+
+    if os.path.exists(zipname):
+        os.remove(zipname)
+
+    with zipfile.ZipFile(zipname,
+                         mode="w",
+                         compression=compression,
+                         allowZip64=allowZip64) as fh:
+        for path, dnames, fnames in os.walk(dirname):
+            fnames = sorted(fnames)
+            for each_fname in fnames:
+                each_fname = os.path.join(path, each_fname)
+                each_fname_rel = os.path.relpath(each_fname, dirname)
+                fh.write(each_fname, each_fname_rel)
+
+    return zipname
+
+
 def concat_dask(dask_arr):
     n_blocks = dask_arr.shape
 
@@ -113,15 +134,7 @@ def open_zarr(name, mode="r"):
 
 
 def zip_zarr(name):
-    zip_ext = os.extsep + "zip"
-    name_z = name + zip_ext
-
-    io_remove(name_z)
-
-    with zarr.ZipStore(name_z, mode="w", compression=0, allowZip64=True) as f1:
-        with open_zarr(name, "r") as f2:
-            f1.update(f2.store)
-
+    name_z = zip_dir(name)
     io_remove(name)
     shutil.move(name_z, name)
 
