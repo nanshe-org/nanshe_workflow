@@ -11,6 +11,8 @@ import os
 import shutil
 import zipfile
 
+import scandir
+
 import h5py
 import numpy
 import tifffile
@@ -55,7 +57,7 @@ def zip_dir(dirname, compression=zipfile.ZIP_STORED, allowZip64=True):
                          mode="w",
                          compression=compression,
                          allowZip64=allowZip64) as fh:
-        for path, dnames, fnames in os.walk(dirname):
+        for path, dnames, fnames in scandir.walk(dirname):
             fnames = sorted(fnames)
             for each_fname in fnames:
                 each_fname = os.path.join(path, each_fname)
