@@ -81,6 +81,8 @@ def dask_rm_tree(dirname):
 
 
 def dask_io_remove(name, executor=None):
+    name = os.path.abspath(name)
+
     rm_task = None
     if not os.path.exists(name):
         rm_task = dask_rm_nothing()
