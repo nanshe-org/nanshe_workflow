@@ -33,7 +33,6 @@ requirements:
     - dask-imread
     - dask-ndfilters
     - dask-ndfourier
-    - runipy
     - cloudpickle
     - tifffile
     - imgroi
