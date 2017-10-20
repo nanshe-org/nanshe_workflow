@@ -4,6 +4,7 @@ __date__ = "$Nov 05, 2015 13:54$"
 
 import collections
 from contextlib import contextmanager
+import errno
 import itertools
 import glob
 import numbers
@@ -53,13 +54,21 @@ def dask_rm_nothing():
 
 @dask.delayed
 def dask_rm_file(fname):
-    os.remove(fname)
+    try:
+        os.remove(fname)
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
     return fname
 
 
 @dask.delayed
 def dask_rm_dir(dname, *deps):
-    shutil.rmtree(dname)
+    try:
+        shutil.rmtree(dname)
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
     return dname
 
 
