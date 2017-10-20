@@ -203,12 +203,15 @@ def open_zarr(name, mode="r"):
 def zip_zarr(name, executor=None):
     name_z = zip_dir(name)
 
-    if executor is None:
-        io_remove(name)
-    else:
-        dask_io_remove(name, executor=executor)
+    name_rm = os.extsep + name
+    os.rename(name, name_rm)
 
     shutil.move(name_z, name)
+
+    if executor is None:
+        io_remove(name_rm)
+    else:
+        dask_io_remove(name_rm, executor=executor)
 
 
 def hdf5_to_zarr(hdf5_file, zarr_file):
