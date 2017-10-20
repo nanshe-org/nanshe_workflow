@@ -187,9 +187,14 @@ def open_zarr(name, mode="r"):
         raise NotImplementedError("Unable to open '%s'." % name)
 
 
-def zip_zarr(name):
+def zip_zarr(name, executor=None):
     name_z = zip_dir(name)
-    io_remove(name)
+
+    if executor is None:
+        io_remove(name)
+    else:
+        dask_io_remove(name, executor=executor)
+
     shutil.move(name_z, name)
 
 
