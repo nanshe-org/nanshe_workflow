@@ -46,6 +46,58 @@ def io_remove(name):
         raise ValueError("Unable to remove path, '%s'." % name)
 
 
+@dask.delayed
+def dask_rm_nothing():
+    return None
+
+
+@dask.delayed
+def dask_rm_file(fname):
+    os.remove(fname)
+    return fname
+
+
+@dask.delayed
+def dask_rm_dir(dname, *deps):
+    os.rmdir(dname)
+    return dname
+
+
+def dask_rm_tree(dirname):
+    dirname = os.path.abspath(dirname)
+
+    def _int_dask_rm_tree(dname):
+        deps = []
+        for pobj in scandir.scandir(dname):
+            if pobj.is_file(follow_symlinks=False):
+                deps.append(dask_rm_file(pobj.path))
+            if pobj.is_dir(follow_symlinks=False):
+                deps.append(dask_rm_dir(
+                    pobj.path, *_int_dask_rm_tree(pobj.path)
+                ))
+        return deps
+
+    return dask_rm_dir(dirname, *_int_dask_rm_tree(dirname))
+
+
+def dask_io_remove(name, executor=None):
+    rm_task = None
+    if not os.path.exists(name):
+        rm_task = dask_rm_nothing()
+    elif os.path.isfile(name):
+        rm_task = dask_rm_file(name)
+    elif os.path.isdir(name):
+        rm_task = dask_rm_tree(name)
+    else:
+        raise ValueError("Unable to remove path, '%s'." % name)
+
+    if executor is None:
+        return rm_task
+
+    dask.distributed.progress(executor.compute(rm_task), notebook=False)
+    print("")
+
+
 def zip_dir(dirname, compression=zipfile.ZIP_STORED, allowZip64=True):
     dirname = os.path.abspath(dirname)
     zipname = dirname + os.extsep + "zip"
