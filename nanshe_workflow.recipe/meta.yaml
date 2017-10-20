@@ -22,6 +22,7 @@ requirements:
     - bokeh >=0.12.4
     - future
     - webcolors
+    - nbconvert
     - notebook
     - ipyparallel
     - ipywidgets
