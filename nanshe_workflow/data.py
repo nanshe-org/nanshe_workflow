@@ -59,7 +59,7 @@ def dask_rm_file(fname):
 
 @dask.delayed
 def dask_rm_dir(dname, *deps):
-    os.rmdir(dname)
+    shutil.rmtree(dname)
     return dname
 
 
