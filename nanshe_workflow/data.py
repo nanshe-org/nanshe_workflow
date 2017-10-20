@@ -4,6 +4,7 @@ __date__ = "$Nov 05, 2015 13:54$"
 
 import collections
 from contextlib import contextmanager
+import errno
 import itertools
 import glob
 import numbers
@@ -53,13 +54,21 @@ def dask_rm_nothing():
 
 @dask.delayed
 def dask_rm_file(fname):
-    os.remove(fname)
+    try:
+        os.remove(fname)
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
     return fname
 
 
 @dask.delayed
 def dask_rm_dir(dname, *deps):
-    os.rmdir(dname)
+    try:
+        shutil.rmtree(dname)
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
     return dname
 
 
@@ -81,13 +90,17 @@ def dask_rm_tree(dirname):
 
 
 def dask_io_remove(name, executor=None):
+    name = os.path.abspath(name)
+
     rm_task = None
     if not os.path.exists(name):
         rm_task = dask_rm_nothing()
     elif os.path.isfile(name):
         rm_task = dask_rm_file(name)
+        rm_task = dask.delayed(io_remove)(rm_task)
     elif os.path.isdir(name):
         rm_task = dask_rm_tree(name)
+        rm_task = dask.delayed(io_remove)(rm_task)
     else:
         raise ValueError("Unable to remove path, '%s'." % name)
 
@@ -190,12 +203,15 @@ def open_zarr(name, mode="r"):
 def zip_zarr(name, executor=None):
     name_z = zip_dir(name)
 
-    if executor is None:
-        io_remove(name)
-    else:
-        dask_io_remove(name, executor=executor)
+    name_rm = os.extsep + name
+    os.rename(name, name_rm)
 
     shutil.move(name_z, name)
+
+    if executor is None:
+        io_remove(name_rm)
+    else:
+        dask_io_remove(name_rm, executor=executor)
 
 
 def hdf5_to_zarr(hdf5_file, zarr_file):
