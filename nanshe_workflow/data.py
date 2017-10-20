@@ -88,8 +88,10 @@ def dask_io_remove(name, executor=None):
         rm_task = dask_rm_nothing()
     elif os.path.isfile(name):
         rm_task = dask_rm_file(name)
+        rm_task = dask.delayed(io_remove)(rm_task)
     elif os.path.isdir(name):
         rm_task = dask_rm_tree(name)
+        rm_task = dask.delayed(io_remove)(rm_task)
     else:
         raise ValueError("Unable to remove path, '%s'." % name)
 
