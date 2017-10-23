@@ -177,6 +177,35 @@ def dask_load_hdf5(fn, dn, chunks=None):
     return a
 
 
+def dask_store_zarr(filename, datasetnames, datasets, executor):
+    if len(datasetnames) != len(datasets):
+        raise ValueError(
+            "Need `datasetnames` and `datasets` to have the same length."
+        )
+
+    with open_zarr(filename, "w") as fh:
+        statuses = []
+
+        for each_datasetname, each_dataset in izip(datasetnames, datasets):
+            each_dataset = dask.array.asarray(each_dataset)
+
+            each_zarr_array = fh.create_dataset(
+                each_datasetname,
+                shape=each_dataset.shape,
+                dtype=each_dataset.dtype,
+                chunks=True
+            )
+
+            each_dataset = each_dataset.rechunk(each_zarr_array.chunks)
+
+            statuses.append(executor.compute(dask.array.store(
+                each_dataset, each_zarr_array, lock=False, compute=False
+            )))
+
+        dask.distributed.progress(statuses, notebook=False)
+        print("")
+
+
 def save_tiff(fn, a):
     if os.path.exists(fn):
         os.remove(fn)
