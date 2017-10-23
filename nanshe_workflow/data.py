@@ -35,6 +35,8 @@ from builtins import (
 )
 from past.builtins import unicode
 
+from nanshe_workflow.ipy import FloatProgress
+
 
 def io_remove(name):
     if not os.path.exists(name):
@@ -118,6 +120,10 @@ def zip_dir(dirname, compression=zipfile.ZIP_STORED, allowZip64=True):
     if os.path.exists(zipname):
         os.remove(zipname)
 
+    num_files = sum([len(fns) for _1, _2, fns in scandir.walk(dirname)])
+
+    progress_bar = FloatProgress(min=0.0, max=float(num_files))
+    display(progress_bar)
     with zipfile.ZipFile(zipname,
                          mode="w",
                          compression=compression,
@@ -128,6 +134,7 @@ def zip_dir(dirname, compression=zipfile.ZIP_STORED, allowZip64=True):
                 each_fname = os.path.join(path, each_fname)
                 each_fname_rel = os.path.relpath(each_fname, dirname)
                 fh.write(each_fname, each_fname_rel)
+                progress_bar.value += 1
 
     return zipname
 
