@@ -456,9 +456,6 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
 
     def build_block_parallel(calculate):
         def wrapper(data, *args, **kwargs):
-            client[:].apply(gc.collect).get()
-            gc.collect()
-
             ordered_bound_args, new_args, new_kwargs = tied_call_args(
                 unwrap(calculate), data, *args, **kwargs
             )
@@ -635,9 +632,6 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
                 out[each_result_blocks_loc] = each_result_block[...]
 
             progress_bar.value = 1.0
-
-            client[:].apply(gc.collect).get()
-            gc.collect()
 
             return(out)
 
