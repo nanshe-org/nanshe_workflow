@@ -456,8 +456,12 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
 
     def build_block_parallel(calculate):
         def wrapper(data, *args, **kwargs):
-            client[:].apply(gc.collect).get()
-            gc.collect()
+            # Get `concurrent.futures` compatible `Executor`.
+            # Tries the `distributed` syntax and falls back for `ipyparallel`.
+            try:
+                executor = client.get_executor()
+            except AttributeError:
+                executor = client.executor()
 
             ordered_bound_args, new_args, new_kwargs = tied_call_args(
                 unwrap(calculate), data, *args, **kwargs
@@ -530,8 +534,6 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
             data_blocks, data_halo_blocks, result_halos_trim = split_blocks(
                 data.shape, block_shape, block_halo
             )
-
-            lview = client.load_balanced_view()
 
             result_blocks_loc = []
             data_blocks_kwargs = []
@@ -618,7 +620,7 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
             calculate_block = lambda db, dbds, kw: zarr.array(calculate(
                 db[...], dbds[...], *new_args, **kw
             ))
-            result_blocks = lview.map(
+            result_blocks = executor.map(
                 calculate_block,
                 DataBlocks(data, data_blocks),
                 DataBlocksDictSampleType(data, data_blocks_dict_sample),
@@ -630,14 +632,11 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
             for i, (each_data_block, each_result_blocks_loc, each_result_block) in enumerate(
                     izip(data_blocks, result_blocks_loc, result_blocks)
             ):
-                progress_bar.value = i / float(len(result_blocks))
+                progress_bar.value = i / float(len(data_blocks))
 
                 out[each_result_blocks_loc] = each_result_block[...]
 
             progress_bar.value = 1.0
-
-            client[:].apply(gc.collect).get()
-            gc.collect()
 
             return(out)
 
