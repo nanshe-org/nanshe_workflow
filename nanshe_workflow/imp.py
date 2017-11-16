@@ -124,6 +124,13 @@ def block_postprocess_data_parallel(client):
     """
 
     def postprocess_data(new_dictionary, **parameters):
+        # Get `concurrent.futures` compatible `Executor`.
+        # Tries the `distributed` syntax and falls back for `ipyparallel`.
+        try:
+            executor = client.get_executor()
+        except AttributeError:
+            executor = client.executor()
+
         data_halo_blocks = []
         for i in irange(len(new_dictionary)):
             data_halo_blocks.append([i])
@@ -133,8 +140,7 @@ def block_postprocess_data_parallel(client):
 
         data_blocks = DataBlocks(new_dictionary, data_halo_blocks)
 
-        lview = client.load_balanced_view()
-        result_blocks = lview.map(
+        result_blocks = executor.map(
             lambda d: (
                 wavelet_denoising(d[...], **parameters["wavelet_denoising"])
             ),
@@ -147,7 +153,7 @@ def block_postprocess_data_parallel(client):
         progress_bar = FloatProgress(min=0.0, max=1.0)
         display(progress_bar)
         for i, each_result_block in enumerate(result_blocks):
-            progress_bar.value = i / float(len(result_blocks))
+            progress_bar.value = i / float(len(data_blocks))
             new_neurons_set = merge_neuron_sets(
                 new_neurons_set,
                 each_result_block[...],
