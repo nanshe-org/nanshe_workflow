@@ -51,6 +51,10 @@ build:
           conda3 update -y --use-local --all
           conda3 clean -tipsy
     - script:
+        name: Restrict OpenBLAS to a single thread.
+        code: |-
+          export OPENBLAS_NUM_THREADS=1
+    - script:
         name: Configure the Python 2 iPython ipcluster profiles.
         code: |-
           python2 -m IPython profile create --parallel
