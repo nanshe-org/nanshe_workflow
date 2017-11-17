@@ -36,3 +36,7 @@ sge_engines
 log.client
 log.scheduler
 log.workers
+dask-worker-script*
+[0-9]*.err
+[0-9]*.out
+worker-*/
