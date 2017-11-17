@@ -17,6 +17,9 @@ from psutil import cpu_count
 import numpy
 import zarr
 
+import distributed
+import dask_drmaa
+
 import dask
 import dask.array
 
@@ -130,6 +133,36 @@ def get_client(profile):
         sleep(1.0)
 
     return(client)
+
+
+def startup_distributed(nworkers):
+    cluster = dask_drmaa.DRMAACluster(template={"jobEnvironment": os.environ})
+    cluster.start_workers(int(nworkers))
+
+    client = distributed.Client(cluster)
+    while (
+              (client.status == "running") and
+              (len(client.scheduler_info()["workers"]) < nworkers)
+          ):
+        sleep(1)
+
+    return client
+
+
+def shutdown_distributed(client):
+    cluster = client.cluster
+
+    client.shutdown()
+    while (
+              (client.status == "running") and
+              (len(client.scheduler_info()["workers"]) != 0)
+          ):
+        sleep(1)
+
+    cluster.stop_workers(cluster.workers)
+    while len(cluster.workers) != 0:
+        sleep(1)
+    cluster.close()
 
 
 @contextmanager

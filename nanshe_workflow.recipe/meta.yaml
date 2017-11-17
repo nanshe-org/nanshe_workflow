@@ -30,7 +30,9 @@ requirements:
     - jupyter_contrib_nbextensions
     - dask-core
     - toolz >=0.7.3
+    - pyyaml
     - distributed
+    - dask-drmaa
     - dask-imread
     - dask-ndfilters
     - dask-ndfourier
