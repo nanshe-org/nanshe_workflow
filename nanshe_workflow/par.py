@@ -136,7 +136,7 @@ def get_client(profile):
 
 
 def startup_distributed(nworkers):
-    cluster = dask_drmaa.DRMAACluster()
+    cluster = dask_drmaa.DRMAACluster(template={"jobEnvironment": os.environ})
     cluster.start_workers(int(nworkers))
 
     client = distributed.Client(cluster)

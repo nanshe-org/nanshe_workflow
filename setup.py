@@ -63,6 +63,7 @@ setup(
     author_email="kirkhamj@janelia.hhmi.org",
     py_modules=["versioneer"],
     packages=find_packages(exclude=["tests*"]),
+    package_data={"nanshe_workflow": ["dask_config.yaml"]},
     cmdclass=versioneer.get_cmdclass(),
     build_requires=build_requires,
     install_requires=install_requires,

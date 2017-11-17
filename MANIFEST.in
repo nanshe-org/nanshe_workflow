@@ -1,2 +1,4 @@
 include versioneer.py
 include nanshe_workflow/_version.py
+
+include nanshe_workflow/dask_config.yaml
