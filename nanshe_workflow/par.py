@@ -650,9 +650,12 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
                 def __len__(self):
                     return(len(self.data_blocks_dict_sample))
 
-            calculate_block = lambda db, dbds, kw: zarr.array(calculate(
-                db[...], dbds[...], *new_args, **kw
-            ))
+            def calculate_block(db, dbds, kw):
+                with dask.set_options(get=dask.get):
+                    return zarr.array(calculate(
+                        numpy.asarray(db[...]), numpy.array(dbds[...]), *new_args, **kw
+                    ))
+
             result_blocks = executor.map(
                 calculate_block,
                 DataBlocks(data, data_blocks),
