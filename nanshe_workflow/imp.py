@@ -7,6 +7,8 @@ import itertools
 import numpy
 import zarr
 
+import dask
+
 from builtins import range as irange
 
 from nanshe.imp.segment import get_empty_neuron,  \
@@ -140,12 +142,13 @@ def block_postprocess_data_parallel(client):
 
         data_blocks = DataBlocks(new_dictionary, data_halo_blocks)
 
-        result_blocks = executor.map(
-            lambda d: (
-                wavelet_denoising(d[...], **parameters["wavelet_denoising"])
-            ),
-            data_blocks
-        )
+        def calculate_block(db):
+            with dask.set_options(get=dask.get):
+                return wavelet_denoising(
+                    numpy.asarray(db[...]), **parameters["wavelet_denoising"]
+                )
+
+        result_blocks = executor.map(calculate_block, data_blocks)
 
         new_neurons_set = get_empty_neuron(
             shape=new_dictionary.shape[1:], dtype=new_dictionary.dtype
