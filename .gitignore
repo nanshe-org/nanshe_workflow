@@ -40,3 +40,4 @@ dask-worker-script*
 [0-9]*.err
 [0-9]*.out
 worker-*/
+dask-worker-space/
