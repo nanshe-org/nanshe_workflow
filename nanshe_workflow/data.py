@@ -10,6 +10,7 @@ import glob
 import numbers
 import os
 import shutil
+import tempfile
 import zipfile
 
 import scandir
@@ -35,7 +36,7 @@ from builtins import (
 )
 from past.builtins import unicode
 
-from nanshe_workflow.ipy import FloatProgress
+from nanshe_workflow.ipy import display, FloatProgress
 
 
 def io_remove(name):
@@ -47,11 +48,6 @@ def io_remove(name):
         shutil.rmtree(name)
     else:
         raise ValueError("Unable to remove path, '%s'." % name)
-
-
-@dask.delayed
-def dask_rm_nothing():
-    return None
 
 
 @dask.delayed
@@ -94,23 +90,21 @@ def dask_rm_tree(dirname):
 def dask_io_remove(name, executor=None):
     name = os.path.abspath(name)
 
-    rm_task = None
-    if not os.path.exists(name):
-        rm_task = dask_rm_nothing()
-    elif os.path.isfile(name):
-        rm_task = dask_rm_file(name)
-        rm_task = dask.delayed(io_remove)(rm_task)
-    elif os.path.isdir(name):
-        rm_task = dask_rm_tree(name)
-        rm_task = dask.delayed(io_remove)(rm_task)
-    else:
-        raise ValueError("Unable to remove path, '%s'." % name)
+    tmp_dir = "tmp_nanshe_workflow_{0}_".format(
+        os.path.splitext(os.path.basename(name))[0]
+    )
+    tmp_dir = tempfile.mkdtemp(prefix=tmp_dir)
+
+    if os.path.exists(name):
+        os.rename(name, os.path.join(tmp_dir, name))
+
+    rm_task = dask_rm_tree(tmp_dir)
+    rm_task = dask.delayed(io_remove)(rm_task)
 
     if executor is None:
         return rm_task
 
-    dask.distributed.progress(executor.compute(rm_task), notebook=False)
-    print("")
+    display(dask.distributed.progress(executor.compute(rm_task)))
 
 
 def zip_dir(dirname, compression=zipfile.ZIP_STORED, allowZip64=True):
