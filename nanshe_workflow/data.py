@@ -191,25 +191,30 @@ def dask_store_zarr(filename, datasetnames, datasets, executor):
         )
 
     with open_zarr(filename, "w") as fh:
-        statuses = []
+        status = None
 
+        dask_arrays = []
+        zarr_arrays = []
         for each_datasetname, each_dataset in izip(datasetnames, datasets):
-            each_dataset = dask.array.asarray(each_dataset)
+            each_dask_array = dask.array.asarray(each_dataset)
 
             each_zarr_array = fh.create_dataset(
                 each_datasetname,
-                shape=each_dataset.shape,
-                dtype=each_dataset.dtype,
+                shape=each_dask_array.shape,
+                dtype=each_dask_array.dtype,
                 chunks=True
             )
 
-            each_dataset = each_dataset.rechunk(each_zarr_array.chunks)
+            each_dask_array = each_dask_array.rechunk(each_zarr_array.chunks)
 
-            statuses.append(executor.compute(dask.array.store(
-                each_dataset, each_zarr_array, lock=False, compute=False
-            )))
+            dask_arrays.append(each_dask_array)
+            zarr_arrays.append(each_zarr_array)
 
-        dask.distributed.progress(statuses, notebook=False)
+        status = executor.compute(dask.array.store(
+            dask_arrays, zarr_arrays, lock=False, compute=False
+        ))
+
+        dask.distributed.progress(status, notebook=False)
         print("")
 
 
