@@ -104,7 +104,7 @@ def dask_io_remove(name, executor=None):
     if executor is None:
         return rm_task
 
-    display(dask.distributed.progress(executor.compute(rm_task)))
+    display(dask.distributed.progress(executor.compute(rm_task), multi=False))
 
 
 def zip_dir(dirname, compression=zipfile.ZIP_STORED, allowZip64=True):
