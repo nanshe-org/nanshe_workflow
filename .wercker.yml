@@ -1,6 +1,6 @@
 box:
   id: nanshe/nanshe_notebook
-  entrypoint: /opt/conda/bin/tini -- /usr/share/docker/entrypoint.sh
+  entrypoint: /opt/conda/bin/tini -- /usr/share/docker/entrypoint.sh /usr/share/docker/entrypoint_2.sh
 
 build:
   steps:
