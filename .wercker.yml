@@ -1,5 +1,5 @@
 box:
-  id: nanshe/nanshe_notebook
+  id: "nanshe/nanshe_notebook:latest"
   entrypoint: /opt/conda/bin/tini -- /usr/share/docker/entrypoint.sh /usr/share/docker/entrypoint_2.sh
 
 build:
