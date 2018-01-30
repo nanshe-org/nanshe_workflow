@@ -22,6 +22,11 @@ import distributed
 import dask
 import dask.array
 
+try:
+    import dask_drmaa
+except (ImportError, RuntimeError):
+    dask_drmaa = None
+
 from builtins import (
     map as imap,
     range as irange,
@@ -137,13 +142,12 @@ def get_client(profile):
 def startup_distributed(nworkers):
     nworkers = int(nworkers)
 
-    try:
-        import dask_drmaa
+    if dask_drmaa:
         cluster = dask_drmaa.DRMAACluster(
             template={"jobEnvironment": os.environ}
         )
         cluster.start_workers(nworkers)
-    except (ImportError, RuntimeError):
+    else:
         # Either `dask_drmaa` is unavailable or DRMAA cannot start.
         # Fallback to a local Distributed client instead.
         cluster = distributed.LocalCluster(
