@@ -170,7 +170,15 @@ def shutdown_distributed(client):
           ):
         sleep(1)
 
-    cluster.stop_workers(cluster.workers)
+    workers = list(cluster.workers)
+    try:
+        cluster.stop_worker
+    except AttributeError:
+        cluster.stop_workers(workers)
+    else:
+        for w in workers:
+            cluster.stop_worker(w)
+
     while len(cluster.workers) != 0:
         sleep(1)
     cluster.close()
