@@ -217,7 +217,7 @@ def save_tiff(fn, a):
         os.remove(fn)
     with tifffile.TiffWriter(fn, bigtiff=True) as tif:
         for i in irange(a.shape[0]):
-            tif.save(numpy.array(a[i]))
+            tif.save(numpy.asarray(a[i]))
 
 
 @contextmanager
@@ -375,7 +375,7 @@ class LazyHDF5Dataset(LazyDataset):
                                 key_rsort += (slice(None),)
                                 continue
 
-                            each_key = numpy.array(each_key)
+                            each_key = numpy.asarray(each_key)
                             each_key_sort = numpy.argsort(each_key)
                             each_key_rsort = numpy.concatenate([
                                 each_key_sort[None],
