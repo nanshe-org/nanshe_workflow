@@ -653,7 +653,7 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
             def calculate_block(db, dbds, kw):
                 with dask.set_options(get=dask.get):
                     return zarr.array(calculate(
-                        numpy.asarray(db[...]), numpy.array(dbds[...]), *new_args, **kw
+                        numpy.asarray(db[...]), numpy.asarray(dbds[...]), *new_args, **kw
                     ))
 
             result_blocks = executor.map(
