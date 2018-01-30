@@ -23,10 +23,6 @@ build:
           conda2 build nanshe_workflow.recipe
           mv .git/shallow-not .git/shallow || true
           rm -rf /opt/conda2/conda-bld/work/*
-          conda2 remove -y -n _build --all || true
-          conda2 remove -y -n _build_placehold_placehold_placehold_placehold_placehold_placeh --all || true
-          conda2 remove -y -n _b_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold --all || true
-          conda2 remove -y -n _test --all || true
     - script:
         name: Build the Python 3 package and clean up after.
         code: |-
@@ -34,10 +30,6 @@ build:
           conda3 build nanshe_workflow.recipe
           mv .git/shallow-not .git/shallow || true
           rm -rf /opt/conda3/conda-bld/work/*
-          conda3 remove -y -n _build --all || true
-          conda3 remove -y -n _build_placehold_placehold_placehold_placehold_placehold_placeh --all || true
-          conda3 remove -y -n _b_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold --all || true
-          conda3 remove -y -n _test --all || true
     - script:
         name: Install for Python 2 and clean up.
         code: |-
@@ -88,10 +80,6 @@ build_sge:
           conda2 build nanshe_workflow.recipe
           mv .git/shallow-not .git/shallow || true
           rm -rf /opt/conda2/conda-bld/work/*
-          conda2 remove -y -n _build --all || true
-          conda2 remove -y -n _build_placehold_placehold_placehold_placehold_placehold_placeh --all || true
-          conda2 remove -y -n _b_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold --all || true
-          conda2 remove -y -n _test --all || true
     - script:
         name: Build the Python 3 package and clean up after.
         code: |-
@@ -99,10 +87,6 @@ build_sge:
           conda3 build nanshe_workflow.recipe
           mv .git/shallow-not .git/shallow || true
           rm -rf /opt/conda3/conda-bld/work/*
-          conda3 remove -y -n _build --all || true
-          conda3 remove -y -n _build_placehold_placehold_placehold_placehold_placehold_placeh --all || true
-          conda3 remove -y -n _b_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold --all || true
-          conda3 remove -y -n _test --all || true
     - script:
         name: Install for Python 2 and clean up.
         code: |-
