@@ -18,7 +18,6 @@ import numpy
 import zarr
 
 import distributed
-import dask_drmaa
 
 import dask
 import dask.array
@@ -136,8 +135,20 @@ def get_client(profile):
 
 
 def startup_distributed(nworkers):
-    cluster = dask_drmaa.DRMAACluster(template={"jobEnvironment": os.environ})
-    cluster.start_workers(int(nworkers))
+    nworkers = int(nworkers)
+
+    try:
+        import dask_drmaa
+        cluster = dask_drmaa.DRMAACluster(
+            template={"jobEnvironment": os.environ}
+        )
+        cluster.start_workers(nworkers)
+    except (ImportError, RuntimeError):
+        # Either `dask_drmaa` is unavailable or DRMAA cannot start.
+        # Fallback to a local Distributed client instead.
+        cluster = distributed.LocalCluster(
+            n_workers=nworkers, threads_per_worker=1
+        )
 
     client = distributed.Client(cluster)
     while (
@@ -152,14 +163,22 @@ def startup_distributed(nworkers):
 def shutdown_distributed(client):
     cluster = client.cluster
 
-    client.shutdown()
+    client.close()
     while (
               (client.status == "running") and
               (len(client.scheduler_info()["workers"]) != 0)
           ):
         sleep(1)
 
-    cluster.stop_workers(cluster.workers)
+    workers = list(cluster.workers)
+    try:
+        cluster.stop_worker
+    except AttributeError:
+        cluster.stop_workers(workers)
+    else:
+        for w in workers:
+            cluster.stop_worker(w)
+
     while len(cluster.workers) != 0:
         sleep(1)
     cluster.close()

@@ -1,8 +1,97 @@
-box:
-  id: "nanshe/nanshe_notebook:sge"
-  entrypoint: /opt/conda/bin/tini -- /usr/share/docker/entrypoint.sh /usr/share/docker/entrypoint_2.sh
-
 build:
+  box:
+    id: "nanshe/nanshe_notebook:latest"
+    entrypoint: /opt/conda/bin/tini -- /usr/share/docker/entrypoint.sh
+
+  steps:
+    - script:
+        name: Ensure clean repo.
+        code: |-
+          git update-index -q --refresh
+    - script:
+        name: Python 2 environment version details.
+        code: |-
+          conda2 list
+    - script:
+        name: Python 3 environment version details.
+        code: |-
+          conda3 list
+    - script:
+        name: Build the Python 2 package and clean up after.
+        code: |-
+          mv .git/shallow .git/shallow-not || true
+          conda2 build nanshe_workflow.recipe
+          mv .git/shallow-not .git/shallow || true
+          rm -rf /opt/conda2/conda-bld/work/*
+          conda2 remove -y -n _build --all || true
+          conda2 remove -y -n _build_placehold_placehold_placehold_placehold_placehold_placeh --all || true
+          conda2 remove -y -n _b_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold --all || true
+          conda2 remove -y -n _test --all || true
+    - script:
+        name: Build the Python 3 package and clean up after.
+        code: |-
+          mv .git/shallow .git/shallow-not || true
+          conda3 build nanshe_workflow.recipe
+          mv .git/shallow-not .git/shallow || true
+          rm -rf /opt/conda3/conda-bld/work/*
+          conda3 remove -y -n _build --all || true
+          conda3 remove -y -n _build_placehold_placehold_placehold_placehold_placehold_placeh --all || true
+          conda3 remove -y -n _b_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold --all || true
+          conda3 remove -y -n _test --all || true
+    - script:
+        name: Install for Python 2 and clean up.
+        code: |-
+          conda2 install -y --use-local nanshe_workflow
+          conda2 update -y --use-local --all
+          conda2 clean -tipsy
+    - script:
+        name: Install for Python 3 and clean up.
+        code: |-
+          conda3 install -y --use-local nanshe_workflow
+          conda3 update -y --use-local --all
+          conda3 clean -tipsy
+    - script:
+        name: Restrict OpenBLAS to a single thread.
+        code: |-
+          export OPENBLAS_NUM_THREADS=1
+    - script:
+        name: Configure the Python 2 iPython ipcluster profiles.
+        code: |-
+          python2 -m IPython profile create --parallel
+          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_default/ipcluster_config.py
+          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_default/ipcontroller_config.py
+          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_default/ipengine_config.py
+          python2 -m IPython profile create --parallel --profile=sge
+          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterStart.controller_launcher_class = \"SGE\"\nc.IPClusterEngines.engine_launcher_class = \"SGE\"\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_sge/ipcluster_config.py
+          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_sge/ipcontroller_config.py
+          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_sge/ipengine_config.py
+    - script:
+        name: Configure the Python 3 iPython ipcluster profiles.
+        code: |-
+          python3 -m IPython profile create --parallel
+          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_default/ipcluster_config.py
+          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_default/ipcontroller_config.py
+          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_default/ipengine_config.py
+          python3 -m IPython profile create --parallel --profile=sge
+          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterStart.controller_launcher_class = \"SGE\"\nc.IPClusterEngines.engine_launcher_class = \"SGE\"\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_sge/ipcluster_config.py
+          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_sge/ipcontroller_config.py
+          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_sge/ipengine_config.py
+          mkdir -p /root/.jupyter
+          echo -e "c = get_config()\n\nc.ExecutePreprocessor.timeout = 240" > /root/.jupyter/jupyter_nbconvert_config.py
+    - script:
+        name: Test notebook(s) on Python 2.
+        code: |-
+          python2 setup.py test
+    - script:
+        name: Test notebook(s) on Python 3.
+        code: |-
+          python3 setup.py test
+
+build_sge:
+  box:
+    id: "nanshe/nanshe_notebook:sge"
+    entrypoint: /opt/conda/bin/tini -- /usr/share/docker/entrypoint.sh /usr/share/docker/entrypoint_2.sh
+
   steps:
     - script:
         name: Ensure clean repo.
