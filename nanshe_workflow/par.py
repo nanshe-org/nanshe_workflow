@@ -163,7 +163,7 @@ def startup_distributed(nworkers):
 def shutdown_distributed(client):
     cluster = client.cluster
 
-    client.shutdown()
+    client.close()
     while (
               (client.status == "running") and
               (len(client.scheduler_info()["workers"]) != 0)
