@@ -217,7 +217,7 @@ def save_tiff(fn, a):
         os.remove(fn)
     with tifffile.TiffWriter(fn, bigtiff=True) as tif:
         for i in irange(a.shape[0]):
-            tif.save(numpy.array(a[i]))
+            tif.save(numpy.asarray(a[i]))
 
 
 @contextmanager
