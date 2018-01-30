@@ -55,30 +55,6 @@ build:
         code: |-
           export OPENBLAS_NUM_THREADS=1
     - script:
-        name: Configure the Python 2 iPython ipcluster profiles.
-        code: |-
-          python2 -m IPython profile create --parallel
-          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_default/ipcluster_config.py
-          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_default/ipcontroller_config.py
-          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_default/ipengine_config.py
-          python2 -m IPython profile create --parallel --profile=sge
-          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterStart.controller_launcher_class = \"SGE\"\nc.IPClusterEngines.engine_launcher_class = \"SGE\"\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_sge/ipcluster_config.py
-          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_sge/ipcontroller_config.py
-          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_sge/ipengine_config.py
-    - script:
-        name: Configure the Python 3 iPython ipcluster profiles.
-        code: |-
-          python3 -m IPython profile create --parallel
-          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_default/ipcluster_config.py
-          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_default/ipcontroller_config.py
-          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_default/ipengine_config.py
-          python3 -m IPython profile create --parallel --profile=sge
-          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterStart.controller_launcher_class = \"SGE\"\nc.IPClusterEngines.engine_launcher_class = \"SGE\"\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_sge/ipcluster_config.py
-          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_sge/ipcontroller_config.py
-          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_sge/ipengine_config.py
-          mkdir -p /root/.jupyter
-          echo -e "c = get_config()\n\nc.ExecutePreprocessor.timeout = 240" > /root/.jupyter/jupyter_nbconvert_config.py
-    - script:
         name: Test notebook(s) on Python 2.
         code: |-
           python2 setup.py test
@@ -143,30 +119,6 @@ build_sge:
         name: Restrict OpenBLAS to a single thread.
         code: |-
           export OPENBLAS_NUM_THREADS=1
-    - script:
-        name: Configure the Python 2 iPython ipcluster profiles.
-        code: |-
-          python2 -m IPython profile create --parallel
-          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_default/ipcluster_config.py
-          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_default/ipcontroller_config.py
-          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_default/ipengine_config.py
-          python2 -m IPython profile create --parallel --profile=sge
-          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterStart.controller_launcher_class = \"SGE\"\nc.IPClusterEngines.engine_launcher_class = \"SGE\"\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_sge/ipcluster_config.py
-          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_sge/ipcontroller_config.py
-          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_sge/ipengine_config.py
-    - script:
-        name: Configure the Python 3 iPython ipcluster profiles.
-        code: |-
-          python3 -m IPython profile create --parallel
-          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_default/ipcluster_config.py
-          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_default/ipcontroller_config.py
-          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_default/ipengine_config.py
-          python3 -m IPython profile create --parallel --profile=sge
-          echo -e "import os\n\n\nc = get_config()\n\nc.IPClusterStart.controller_launcher_class = \"SGE\"\nc.IPClusterEngines.engine_launcher_class = \"SGE\"\nc.IPClusterEngines.n = int(os.environ[\"CORES\"]) - 1" > /root/.ipython/profile_sge/ipcluster_config.py
-          echo -e "c = get_config()\n\nc.HubFactory.ip = '*'\nc.HubFactory.engine_ip = '*'\nc.HubFactory.db_class = \"SQLiteDB\"" > /root/.ipython/profile_sge/ipcontroller_config.py
-          echo -e "c = get_config()\n\nc.IPEngineApp.wait_for_url_file = 60\nc.EngineFactory.timeout = 60" > /root/.ipython/profile_sge/ipengine_config.py
-          mkdir -p /root/.jupyter
-          echo -e "c = get_config()\n\nc.ExecutePreprocessor.timeout = 240" > /root/.jupyter/jupyter_nbconvert_config.py
     - script:
         name: Test notebook(s) on Python 2.
         code: |-
