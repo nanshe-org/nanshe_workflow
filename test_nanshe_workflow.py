@@ -22,17 +22,32 @@ class TestNansheWorkflow(unittest.TestCase):
         nb_filenames = [
             "nanshe_ipython.ipynb",
         ]
+
+        timeout_opt = ""
+        if "NB_EXE_TIMEOUT" in os.environ:
+            timeout_opt = (
+                "--ExecutePreprocessor.timeout=%s" %
+                os.environ["NB_EXE_TIMEOUT"]
+            )
+
         for each_nb_filename in nb_filenames:
             argv = (
                 "jupyter",
                 "nbconvert",
-                "--ExecutePreprocessor.kernel_name=python%i" % sys.version_info[0],
+                "--ExecutePreprocessor.kernel_name=python%i" % sys.version_info[0]
+            )
+
+            if timeout_opt:
+                argv += (timeout_opt,)
+
+            argv += (
                 "--to",
                 "notebook",
                 "--stdout",
                 "--execute",
                 "%s/nanshe_ipython.ipynb" % sdir
             )
+
             with sys_args(argv):
                 os.environ["TEST_NOTEBOOKS"] = "true"
                 nbconvert.nbconvertapp.main()
