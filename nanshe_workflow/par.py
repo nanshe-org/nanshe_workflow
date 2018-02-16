@@ -144,7 +144,9 @@ def startup_distributed(nworkers):
 
     if dask_drmaa:
         cluster = dask_drmaa.DRMAACluster(
-            template={"jobEnvironment": os.environ}
+            template={
+                "jobEnvironment": os.environ
+            }
         )
         cluster.start_workers(nworkers)
     else:
