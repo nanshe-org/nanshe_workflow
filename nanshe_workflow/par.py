@@ -164,7 +164,7 @@ def startup_distributed(nworkers):
               (client.status == "running") and
               (len(client.scheduler_info()["workers"]) < nworkers)
           ):
-        sleep(1)
+        sleep(1.0)
 
     return client
 
