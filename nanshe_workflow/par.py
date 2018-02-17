@@ -139,8 +139,12 @@ def get_client(profile):
     return(client)
 
 
-def startup_distributed(nworkers):
+def startup_distributed(nworkers, cluster_kwargs=None, client_kwargs=None):
     nworkers = int(nworkers)
+    if cluster_kwargs is None:
+        cluster_kwargs = {}
+    if client_kwargs is None:
+        client_kwargs = {}
 
     if dask_drmaa:
         cluster = dask_drmaa.DRMAACluster(
@@ -149,22 +153,23 @@ def startup_distributed(nworkers):
                     "--nthreads", "1"
                 ],
                 "jobEnvironment": os.environ
-            }
+            },
+            **cluster_kwargs
         )
         cluster.start_workers(nworkers)
     else:
         # Either `dask_drmaa` is unavailable or DRMAA cannot start.
         # Fallback to a local Distributed client instead.
         cluster = distributed.LocalCluster(
-            n_workers=nworkers, threads_per_worker=1
+            n_workers=nworkers, threads_per_worker=1, **cluster_kwargs
         )
 
-    client = distributed.Client(cluster)
+    client = distributed.Client(cluster, **client_kwargs)
     while (
               (client.status == "running") and
               (len(client.scheduler_info()["workers"]) < nworkers)
           ):
-        sleep(1)
+        sleep(1.0)
 
     return client
 
