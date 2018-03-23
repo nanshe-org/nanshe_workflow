@@ -23,6 +23,7 @@ import zarr
 import dask
 import dask.array
 import dask.delayed
+import dask.distributed
 
 import kenjutsu.format
 
@@ -104,7 +105,11 @@ def dask_io_remove(name, executor=None):
     if executor is None:
         return rm_task
 
-    return executor.compute(rm_task)
+    f = executor.compute(rm_task)
+
+    dask.distributed.fire_and_forget(f)
+
+    return f
 
 
 def zip_dir(dirname, compression=zipfile.ZIP_STORED, allowZip64=True):
