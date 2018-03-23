@@ -212,6 +212,7 @@ def dask_store_zarr(filename, datasetnames, datasets, executor):
         status = executor.compute(dask.array.store(
             dask_arrays, zarr_arrays, lock=False, compute=False
         ))
+        dask.distributed.fire_and_forget(status)
 
         dask.distributed.progress(status, notebook=False)
         print("")
