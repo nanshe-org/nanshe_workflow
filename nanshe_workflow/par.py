@@ -193,8 +193,6 @@ def shutdown_distributed(client):
         for w in workers:
             cluster.stop_worker(w)
 
-    while len(cluster.workers) != 0:
-        sleep(1)
     cluster.close()
 
 
