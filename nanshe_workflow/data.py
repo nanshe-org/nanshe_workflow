@@ -229,7 +229,7 @@ class DistributedDirectoryStore(zarr.DirectoryStore):
     def __delitem__(self, key):
         path = os.path.join(self.path, key)
         if os.path.exists(path):
-            dask.distributed.fire_and_forget(dask_io_remove(path))
+            dask.distributed.fire_and_forget(dask_io_remove(path).persist())
         else:
             raise KeyError(key)
 
