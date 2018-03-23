@@ -242,10 +242,10 @@ class DistributedDirectoryStore(zarr.DirectoryStore):
 @contextmanager
 def open_zarr(name, mode="r"):
     if not os.path.exists(name) and mode in ["a", "w"]:
-        store = zarr.DirectoryStore(name)
+        store = DistributedDirectoryStore(name)
         yield zarr.open_group(store, mode)
     elif os.path.isdir(name):
-        store = zarr.DirectoryStore(name)
+        store = DistributedDirectoryStore(name)
         yield zarr.open_group(store, mode)
     elif zipfile.is_zipfile(name):
         with zarr.ZipStore(name, mode=mode, compression=0, allowZip64=True) as store:
