@@ -220,13 +220,32 @@ def save_tiff(fn, a):
             tif.save(numpy.asarray(a[i]))
 
 
+class DistributedDirectoryStore(zarr.DirectoryStore):
+    def __delitem__(self, key):
+        path = os.path.join(self.path, key)
+        if os.path.exists(path):
+            dask.distributed.fire_and_forget(dask_io_remove(path))
+        else:
+            raise KeyError(key)
+
+    def __setitem__(self, key, value):
+        # Delete in parallel, asynchronously.
+        # Immediately makes room for new key-value pair.
+        try:
+            del self[key]
+        except KeyError:
+            pass
+
+        super(DistributedDirectoryStore, self).__setitem__(key, value)
+
+
 @contextmanager
 def open_zarr(name, mode="r"):
     if not os.path.exists(name) and mode in ["a", "w"]:
-        store = zarr.DirectoryStore(name)
+        store = DistributedDirectoryStore(name)
         yield zarr.open_group(store, mode)
     elif os.path.isdir(name):
-        store = zarr.DirectoryStore(name)
+        store = DistributedDirectoryStore(name)
         yield zarr.open_group(store, mode)
     elif zipfile.is_zipfile(name):
         with zarr.ZipStore(name, mode=mode, compression=0, allowZip64=True) as store:
