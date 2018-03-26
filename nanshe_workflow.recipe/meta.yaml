@@ -38,6 +38,7 @@ requirements:
     - dask-imread
     - dask-ndfilters
     - dask-ndfourier
+    - dask-ndmeasure
     - cloudpickle
     - tifffile
     - imgroi
