@@ -11,6 +11,7 @@ import numbers
 import os
 import shutil
 import tempfile
+import uuid
 import zipfile
 
 import scandir
@@ -526,3 +527,300 @@ class LazyZarrDataset(LazyDataset):
         self_astype.dtype = numpy.dtype(dtype)
 
         yield(self_astype)
+
+
+class DistributedArrayStore(collections.MutableMapping):
+    def __init__(self, diskstore, disklock=False, client=None):
+        """
+            A MutableMapping-based persistent store for Dask Arrays
+
+            Args:
+                diskstore (MutableMapping): where data should be stored to
+                disklock (lock or bool): how to lock store for reading/writing
+                client (Client): Distributed client to use or default
+
+            Note:
+                Invalidates all references to the stored data. Use ``pop``
+                if the data needs to kept around outside the store after
+                removal.
+        """
+
+        if client is None:
+            client = dask.distributed.default_client()
+
+        self._diskstore = diskstore
+        self._memstore = dict()
+        self._disklock = disklock
+
+        self._client = client
+
+    def __getitem__(self, key):
+        """
+            Gets Dask Array corresponding to key
+
+            Either returns a cached Dask Array or a Dask Array loading data
+            from the disk store, which it then caches.
+
+            Args:
+                key (str): key to get
+
+            Returns:
+                Dask Array: Value in store
+        """
+        try:
+            v = self._memstore[key]
+        except KeyError:
+            v = self._diskstore[key]
+            v = dask.array.from_array(
+                v, chunks=v.chunks,
+                lock=self._disklock, fancy=False
+            )
+            self._memstore[key] = v
+
+        return v
+
+    def __setitem__(self, key, value):
+        """
+            Set Dask Array corresponding to key
+
+            Starts a computation of the Dask Array provided with results being
+            stored to disk. Performs this storage operation asynchronously.
+            Users can immediately retrieve a Dask Array pointing to the result,
+            but it may not be completed.
+
+            Args:
+                key (str): key to set
+
+            Note:
+                Prefer ``update`` for storing multiple Dask Arrays as it will
+                collectively optimize them and reuse shared intermediates in
+                the computation.
+        """
+        self.update({key: value})
+
+    def __delitem__(self, key):
+        """
+            Deletes the key specified
+
+            Cancels any existing computations immediately and invalidates any
+            references to the data in Dask. Blocks to delete the data from
+            disk. However depending on how this is implemented in the store it
+            may be fast.
+
+            Args:
+                key (str): key to delete
+
+            Note:
+                Use ``pop`` if the data needs to kept around outside the store
+                after removal.
+        """
+
+        if key not in self:
+            raise KeyError(key)
+
+        # Cancel any existing writing tasks.
+        try:
+            value = self._memstore.pop(key)
+        except KeyError:
+            pass
+        else:
+            with dask.distributed.client.temp_default_client(self._client):
+                with dask.set_options(get=self._client.get):
+                    self._client.cancel(value, force=True)
+
+        del self._diskstore[key]
+
+    def __iter__(self):
+        return iter(self._diskstore)
+
+    def __len__(self):
+        return len(self._diskstore)
+
+    def __contains__(self, key):
+        return (key in self._diskstore)
+
+    def _create_dataset(self, name, shape, dtype, chunks, **kwargs):
+        """
+            Deletes the key specified
+
+            Cancels any existing computations immediately and invalidates any
+            references to the data in Dask. Blocks to delete the data from
+            disk. However depending on how this is implemented in the store it
+            may be fast.
+
+            Args:
+                name (str): name/key for the dataset in the store
+                shape (tuple of ints): space required for the dataset
+                dtype (type): type required for the dataset
+                chunks (tuple of ints): size of each chunk
+
+            Keyword Args:
+                **kwargs: miscellaneous other arguments
+
+            Returns:
+                Dataset allocated in disk store
+
+            Note:
+                Just uses ``create_dataset`` method of store.
+                Can override our method through subclassing.
+        """
+
+        r = self._diskstore.create_dataset(
+            name, shape=shape, dtype=dtype, chunks=chunks, **kwargs
+        )
+        return r
+
+    __marker = object()
+
+    def pop(self, key, default=__marker):
+        """
+            Pops the value associated with the key
+
+            Loads the data associated with the specified key into
+            Distributed's memory. Then deletes the data from the disk store and
+            cancels any Futures related to the old value.
+
+            As a result, this can be very slow and is synchronous. Users can
+            preempt the process by persisting earlier if they know this will be
+            needed.
+
+            Args:
+                key (str): key to pop
+                default (Dask Array): value to return if key is missing
+
+            Returns:
+                Dask Array: Value that was in store
+
+            Note:
+                This should ensure that older references to this data are
+                still valid. However this may involve tricks to get rid of the
+                canceled Futures.
+
+                xref: https://github.com/dask/distributed/issues/1861
+        """
+
+        if key not in self:
+            if default is self.__marker:
+                raise KeyError(key)
+            else:
+                return default
+
+        name = None
+        try:
+            old_value = self._memstore[key]
+        except KeyError:
+            old_value = self._diskstore[key]
+        else:
+            name = old_value.name
+            # Finish storing data to disk
+            with dask.distributed.client.temp_default_client(self._client):
+                with dask.set_options(get=self._client.get):
+                    dask.distributed.wait(old_value)
+
+        value = dask.array.from_array(
+            self._diskstore[key], chunks=old_value.chunks, name=name,
+            lock=self._disklock, fancy=False
+        )
+
+        with dask.distributed.client.temp_default_client(self._client):
+            with dask.set_options(get=self._client.get):
+                value = self._client.persist(value)
+                dask.distributed.wait(value)
+
+        del self._diskstore[key]
+
+        return value
+
+    def popitem(self):
+        """
+            Pops the next key-value pair by iter
+
+            Returns:
+                Dask Array: Key-Value pair that was in store
+
+            Note:
+                See ``pop`` for more details.
+        """
+        try:
+            key = next(iter(self))
+        except StopIteration:
+            raise KeyError("Store empty")
+        else:
+            value = self.pop(key)
+            return key, value
+
+    def clear(self):
+        """
+            Deletes all values in store
+
+            Note:
+                See ``__delitem__`` for more details.
+        """
+        while True:
+            try:
+                key = next(iter(self))
+            except StopIteration:
+                break
+            else:
+                del self[key]
+
+    def update(self, dct):
+        """
+            Updates keys with values in dictionary
+
+            Stores all non-redundant values to the disk store. Removes any
+            existing values on the way. Optimizes over the shared Dask graph
+            of all of the values provided reusing intermediate results as part
+            of the computation to store. Caches Dask Arrays pointing back to
+            the stored result for immediate reuse. Can track progress using
+            these Dask Arrays and/or chain them in other computations.
+
+            Args:
+                dct (Mapping): key-value pairs to store
+
+            Returns:
+                Dask Array: Value that was in store
+        """
+
+        keys = []
+        srcs = []
+        tgts = []
+        for k, v in dct.items():
+            v = dask.array.asarray(v)
+
+            # Skip if this Array is already stored
+            if self._memstore.get(k) is v:
+                continue
+
+            # Make sure the old key is removed before creating a new one
+            try:
+                del self[k]
+            except KeyError:
+                pass
+
+            chunks = tuple(max(c) for c in v.chunks)
+            v = v.rechunk(chunks)
+
+            # Salt keys to avoid referencing expired futures
+            # ref: https://github.com/dask/dask/issues/3322
+            v = v.map_blocks(
+                lambda a, u: a,
+                dtype=v.dtype,
+                token="salted",
+                u=uuid.uuid1().bytes
+            )
+
+            t = self._create_dataset(k, v.shape, v.dtype, chunks)
+
+            keys.append(k)
+            srcs.append(v)
+            tgts.append(t)
+
+        with dask.distributed.client.temp_default_client(self._client):
+            with dask.set_options(get=self._client.get):
+                res = dask.array.store(
+                    srcs, tgts,
+                    lock=self._disklock, compute=True, return_stored=True
+                )
+
+        self._memstore.update({k: v for k, v in zip(keys, res)})

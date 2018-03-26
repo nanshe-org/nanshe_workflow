@@ -16,6 +16,7 @@ requirements:
     - setuptools
   run:
     - python
+    - contextlib2
     - scandir
     - numpy
     - psutil
@@ -28,7 +29,7 @@ requirements:
     - ipyparallel
     - ipywidgets
     - jupyter_contrib_nbextensions
-    - dask-core
+    - dask-core >=0.17.1
     - toolz >=0.7.3
     - python-graphviz
     - pyyaml
