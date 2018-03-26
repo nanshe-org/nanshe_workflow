@@ -16,6 +16,7 @@ requirements:
     - setuptools
   run:
     - python
+    - contextlib2
     - scandir
     - numpy
     - psutil
