@@ -727,7 +727,7 @@ class DistributedArrayStore(collections.MutableMapping):
                 value = self._client.persist(value)
                 dask.distributed.wait(value)
 
-        del self._diskstore[key]
+        del self[key]
 
         return value
 
