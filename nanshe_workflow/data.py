@@ -549,7 +549,6 @@ class DistributedArrayStore(collections.MutableMapping):
             client = dask.distributed.default_client()
 
         self._diskstore = diskstore
-        self._memstore = dict()
         self._disklock = disklock
 
         self._client = client
@@ -567,15 +566,16 @@ class DistributedArrayStore(collections.MutableMapping):
             Returns:
                 Dask Array: Value in store
         """
-        try:
-            v = self._memstore[key]
-        except KeyError:
+
+        if key in self._client.datasets:
+            v = self._client.datasets[key]
+        else:
             v = self._diskstore[key]
             v = dask.array.from_array(
                 v, chunks=v.chunks,
                 lock=self._disklock, fancy=False
             )
-            self._memstore[key] = v
+            self._client.datasets[key] = v
 
         return v
 
@@ -619,11 +619,8 @@ class DistributedArrayStore(collections.MutableMapping):
             raise KeyError(key)
 
         # Cancel any existing writing tasks.
-        try:
-            value = self._memstore.pop(key)
-        except KeyError:
-            pass
-        else:
+        if key in self._client.datasets:
+            value = self._client.datasets.pop(key)
             with dask.distributed.client.temp_default_client(self._client):
                 with dask.set_options(get=self._client.get):
                     self._client.cancel(value, force=True)
@@ -706,16 +703,15 @@ class DistributedArrayStore(collections.MutableMapping):
                 return default
 
         name = None
-        try:
-            old_value = self._memstore[key]
-        except KeyError:
-            old_value = self._diskstore[key]
-        else:
+        if key in self._client.datasets:
+            old_value = self._client.datasets[key]
             name = old_value.name
             # Finish storing data to disk
             with dask.distributed.client.temp_default_client(self._client):
                 with dask.set_options(get=self._client.get):
                     dask.distributed.wait(old_value)
+        else:
+            old_value = self._diskstore[key]
 
         value = dask.array.from_array(
             self._diskstore[key], chunks=old_value.chunks, name=name,
@@ -789,14 +785,12 @@ class DistributedArrayStore(collections.MutableMapping):
             v = dask.array.asarray(v)
 
             # Skip if this Array is already stored
-            if self._memstore.get(k) is v:
+            if k in self._client.datasets and self._client.datasets[k] is v:
                 continue
 
             # Make sure the old key is removed before creating a new one
-            try:
+            if k in self:
                 del self[k]
-            except KeyError:
-                pass
 
             chunks = tuple(max(c) for c in v.chunks)
             v = v.rechunk(chunks)
@@ -823,4 +817,4 @@ class DistributedArrayStore(collections.MutableMapping):
                     lock=self._disklock, compute=True, return_stored=True
                 )
 
-        self._memstore.update({k: v for k, v in zip(keys, res)})
+        self._client.datasets.update({k: v for k, v in zip(keys, res)})
