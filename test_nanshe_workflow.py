@@ -23,12 +23,10 @@ class TestNansheWorkflow(unittest.TestCase):
             "nanshe_ipython.ipynb",
         ]
 
-        timeout_opt = ""
-        if "NB_EXE_TIMEOUT" in os.environ:
-            timeout_opt = (
-                "--ExecutePreprocessor.timeout=%s" %
-                os.environ["NB_EXE_TIMEOUT"]
-            )
+        timeout_opt = (
+            "--ExecutePreprocessor.timeout=%s" %
+            os.environ.get("NB_EXE_TIMEOUT", "60")
+        )
 
         for each_nb_filename in nb_filenames:
             argv = (
