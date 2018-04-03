@@ -139,7 +139,10 @@ def get_client(profile):
     return(client)
 
 
-def startup_distributed(nworkers, cluster_kwargs=None, client_kwargs=None):
+def startup_distributed(nworkers,
+                        cluster_kwargs=None,
+                        client_kwargs=None,
+                        adaptive_kwargs=None):
     nworkers = int(nworkers)
     if cluster_kwargs is None:
         cluster_kwargs = {}
@@ -163,6 +166,9 @@ def startup_distributed(nworkers, cluster_kwargs=None, client_kwargs=None):
         cluster = distributed.LocalCluster(
             n_workers=nworkers, threads_per_worker=1, **cluster_kwargs
         )
+
+    if adaptive_kwargs is not None:
+        cluster.adapt(**adaptive_kwargs)
 
     client = distributed.Client(cluster, **client_kwargs)
     while (
