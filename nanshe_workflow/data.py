@@ -164,6 +164,10 @@ def dask_load_hdf5(fn, dn, chunks=None):
         dtype = fh[dn].dtype
         if chunks is None:
             chunks = fh[dn].chunks
+        else:
+            chunks = tuple(
+                es if ec == -1 else ec for es, ec in zip(shape, chunks)
+            )
 
     def _read_chunk(fn, dn, idx):
         with h5py.File(fn) as fh:
