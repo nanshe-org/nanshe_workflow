@@ -183,6 +183,11 @@ def startup_distributed(nworkers,
 def shutdown_distributed(client):
     cluster = client.cluster
 
+    # Will close and clear an existing adaptive instance
+    with distributed.utils.ignoring(AttributeError):
+        cluster._adaptive.stop()
+        del cluster._adaptive
+
     client.close()
     while (
               (client.status == "running") and
