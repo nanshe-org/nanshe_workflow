@@ -149,23 +149,26 @@ def startup_distributed(nworkers,
     if client_kwargs is None:
         client_kwargs = {}
 
+    cluster_kwargs_pass = {}
+    cluster_kwargs_pass.update(cluster_kwargs)
     if dask_drmaa:
-        cluster = dask_drmaa.DRMAACluster(
-            template={
+        cluster_kwargs_pass.setdefault(
+            "template",
+            {
                 "args": [
                     "--nthreads", "1"
                 ],
                 "jobEnvironment": os.environ
-            },
-            **cluster_kwargs
+            }
         )
+        cluster = dask_drmaa.DRMAACluster(**cluster_kwargs_pass)
         cluster.start_workers(nworkers)
     else:
         # Either `dask_drmaa` is unavailable or DRMAA cannot start.
         # Fallback to a local Distributed client instead.
-        cluster = distributed.LocalCluster(
-            n_workers=nworkers, threads_per_worker=1, **cluster_kwargs
-        )
+        cluster_kwargs_pass.setdefault("n_workers", nworkers)
+        cluster_kwargs_pass.setdefault("threads_per_worker", 1)
+        cluster = distributed.LocalCluster(**cluster_kwargs_pass)
 
     if adaptive_kwargs is not None:
         cluster.adapt(**adaptive_kwargs)
