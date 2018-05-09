@@ -632,7 +632,15 @@ class DistributedArrayStore(collections.MutableMapping):
         del self._diskstore[key]
 
     def __iter__(self):
-        return iter(self._diskstore)
+        def iter_recurse(obj):
+            for k in obj:
+                if isinstance(obj[k], collections.MutableMapping):
+                    for k2 in iter_recurse(obj[k]):
+                        yield "/".join([k, k2])
+                else:
+                    yield k
+
+        return iter_recurse(self._diskstore)
 
     def __len__(self):
         return len(self._diskstore)
