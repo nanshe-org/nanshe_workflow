@@ -643,7 +643,7 @@ class DistributedArrayStore(collections.MutableMapping):
         return iter_recurse(self._diskstore)
 
     def __len__(self):
-        return len(self._diskstore)
+        return sum(imap(lambda e: 1, iter(self)))
 
     def __contains__(self, key):
         return (key in self._diskstore)
