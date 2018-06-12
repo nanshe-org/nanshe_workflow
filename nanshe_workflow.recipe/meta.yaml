@@ -40,6 +40,7 @@ requirements:
     - dask-ndfourier
     - dask-ndmeasure
     - dask-ndmorph
+    - dask-ml
     - cloudpickle
     - tifffile
     - imgroi
