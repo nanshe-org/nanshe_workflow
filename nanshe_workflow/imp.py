@@ -143,7 +143,7 @@ def block_postprocess_data_parallel(client):
         data_blocks = DataBlocks(new_dictionary, data_halo_blocks)
 
         def calculate_block(db):
-            with dask.set_options(get=dask.get):
+            with dask.config.set(scheduler="single-threaded"):
                 return wavelet_denoising(
                     numpy.asarray(db[...]), **parameters["wavelet_denoising"]
                 )
