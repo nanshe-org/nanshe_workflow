@@ -180,6 +180,8 @@ def startup_distributed(nworkers,
           ):
         sleep(1.0)
 
+    dask.config.set({"distributed.dashboard.link": "/proxy/{port}/status"})
+
     return client
 
 
