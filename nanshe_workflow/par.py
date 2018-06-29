@@ -39,9 +39,7 @@ from kenjutsu.blocks import num_blocks, split_blocks
 from metawrap.metawrap import tied_call_args, unwrap
 
 from nanshe_workflow.data import concat_dask, DataBlocks
-from nanshe_workflow.ipy import (
-    Client, display, FloatProgress, check_nbserverproxy
-)
+from nanshe_workflow.ipy import Client, display, FloatProgress
 
 
 def set_num_workers(num_workers=None):
@@ -182,8 +180,7 @@ def startup_distributed(nworkers,
           ):
         sleep(1.0)
 
-    if check_nbserverproxy():
-        dask.config.set({"distributed.dashboard.link": "/proxy/{port}/status"})
+    dask.config.set({"distributed.dashboard.link": "/proxy/{port}/status"})
 
     return client
 
