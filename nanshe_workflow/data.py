@@ -807,15 +807,6 @@ class DistributedArrayStore(collections.MutableMapping):
             chunks = tuple(max(c) for c in v.chunks)
             v = v.rechunk(chunks)
 
-            # Salt keys to avoid referencing expired futures
-            # ref: https://github.com/dask/dask/issues/3322
-            v = v.map_blocks(
-                lambda a, u: a,
-                dtype=v.dtype,
-                token="salted",
-                u=uuid.uuid1().bytes
-            )
-
             t = self._create_dataset(k, v.shape, v.dtype, chunks)
 
             keys.append(k)
