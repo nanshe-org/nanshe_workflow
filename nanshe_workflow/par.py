@@ -696,7 +696,7 @@ def block_generate_dictionary_parallel(client, calculate_block_shape, calculate_
                     return(len(self.data_blocks_dict_sample))
 
             def calculate_block(db, dbds, kw):
-                with dask.set_options(get=dask.get):
+                with dask.config.set(scheduler="single-threaded"):
                     return zarr.array(calculate(
                         numpy.asarray(db[...]), numpy.asarray(dbds[...]), *new_args, **kw
                     ))

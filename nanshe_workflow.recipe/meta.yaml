@@ -29,7 +29,7 @@ requirements:
     - ipyparallel
     - ipywidgets
     - jupyter_contrib_nbextensions
-    - dask-core >=0.17.1
+    - dask-core >=0.18.0
     - toolz >=0.7.3
     - python-graphviz
     - pyyaml
