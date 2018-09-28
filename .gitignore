@@ -32,6 +32,9 @@ registered_callables.py
 sge_controller
 sge_engines
 
+# Dask files.
+mydask.png
+
 # Dask Distributed files.
 log.client
 log.scheduler
