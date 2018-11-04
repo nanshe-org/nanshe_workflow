@@ -17,10 +17,9 @@ from psutil import cpu_count
 import numpy
 import zarr
 
-import distributed
-
 import dask
 import dask.array
+import dask.distributed
 
 try:
     import dask_drmaa
@@ -168,12 +167,12 @@ def startup_distributed(nworkers,
         # Fallback to a local Distributed client instead.
         cluster_kwargs_pass.setdefault("n_workers", nworkers)
         cluster_kwargs_pass.setdefault("threads_per_worker", 1)
-        cluster = distributed.LocalCluster(**cluster_kwargs_pass)
+        cluster = dask.distributed.LocalCluster(**cluster_kwargs_pass)
 
     if adaptive_kwargs is not None:
         cluster.adapt(**adaptive_kwargs)
 
-    client = distributed.Client(cluster, **client_kwargs)
+    client = dask.distributed.Client(cluster, **client_kwargs)
     while (
               (client.status == "running") and
               (len(client.scheduler_info()["workers"]) < nworkers)
@@ -189,7 +188,7 @@ def shutdown_distributed(client):
     cluster = client.cluster
 
     # Will close and clear an existing adaptive instance
-    with distributed.utils.ignoring(AttributeError):
+    with dask.distributed.utils.ignoring(AttributeError):
         cluster._adaptive.stop()
         del cluster._adaptive
 
