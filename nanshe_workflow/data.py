@@ -625,9 +625,8 @@ class DistributedArrayStore(collections.MutableMapping):
         # Cancel any existing writing tasks.
         if key in self._client.datasets:
             value = self._client.datasets.pop(key)
-            with dask.distributed.client.temp_default_client(self._client):
-                with dask.config.set(get=self._client.get):
-                    self._client.cancel(value, force=True)
+            with dask.config.set(scheduler=self._client):
+                self._client.cancel(value, force=True)
 
         del self._diskstore[key]
 
@@ -719,9 +718,8 @@ class DistributedArrayStore(collections.MutableMapping):
             old_value = self._client.datasets[key]
             name = old_value.name
             # Finish storing data to disk
-            with dask.distributed.client.temp_default_client(self._client):
-                with dask.config.set(get=self._client.get):
-                    dask.distributed.wait(old_value)
+            with dask.config.set(scheduler=self._client):
+                dask.distributed.wait(old_value)
         else:
             old_value = self._diskstore[key]
 
@@ -730,10 +728,9 @@ class DistributedArrayStore(collections.MutableMapping):
             lock=self._disklock, fancy=False
         )
 
-        with dask.distributed.client.temp_default_client(self._client):
-            with dask.config.set(get=self._client.get):
-                value = self._client.persist(value)
-                dask.distributed.wait(value)
+        with dask.config.set(scheduler=self._client):
+            value = self._client.persist(value)
+            dask.distributed.wait(value)
 
         del self[key]
 
@@ -813,11 +810,10 @@ class DistributedArrayStore(collections.MutableMapping):
             srcs.append(v)
             tgts.append(t)
 
-        with dask.distributed.client.temp_default_client(self._client):
-            with dask.config.set(get=self._client.get):
-                res = dask.array.store(
-                    srcs, tgts,
-                    lock=self._disklock, compute=True, return_stored=True
-                )
+        with dask.config.set(scheduler=self._client):
+            res = dask.array.store(
+                srcs, tgts,
+                lock=self._disklock, compute=True, return_stored=True
+            )
 
         self._client.datasets.update({k: v for k, v in zip(keys, res)})
