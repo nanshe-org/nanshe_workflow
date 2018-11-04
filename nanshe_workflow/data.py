@@ -615,8 +615,8 @@ class DistributedArrayStore(collections.MutableMapping):
                 key (str): key to delete
 
             Note:
-                Use ``pop`` if the data needs to kept around outside the store
-                after removal.
+                Use ``pop`` if the data needs to be kept around outside the
+                store after removal.
         """
 
         if key not in self:
