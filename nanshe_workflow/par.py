@@ -23,7 +23,7 @@ import dask.distributed
 
 try:
     import dask_drmaa
-except (ImportError, RuntimeError):
+except (ImportError, OSError, RuntimeError):
     dask_drmaa = None
 
 from builtins import (
