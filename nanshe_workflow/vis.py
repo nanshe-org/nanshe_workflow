@@ -2,6 +2,11 @@ __author__ = "John Kirkham <kirkhamj@janelia.hhmi.org>"
 __date__ = "$Nov 10, 2015 19:44$"
 
 
+import base64
+import io
+import os
+import textwrap
+
 import webcolors
 
 import numpy
@@ -11,6 +16,9 @@ import scipy.ndimage
 
 from matplotlib.colors import ColorConverter
 from matplotlib.cm import gist_rainbow
+
+import bokeh
+import bokeh.resources
 
 from builtins import (
     map as imap,
@@ -22,6 +30,8 @@ from imgroi.core import find_contours
 from xnumpy.core import expand
 
 from yail.core import disperse
+
+from nanshe_workflow.util import hash_file, indent
 
 
 def get_rgb_array(num_colors):
@@ -156,3 +166,65 @@ def masks_to_contours_2d(mskimg):
         mskctr_pts_y.append(mskctr_i_y.tolist())
 
     return(mskctr_pts_y, mskctr_pts_x)
+
+
+def generate_cdn(sha_type):
+    cdn_block = {}
+    html_cdn_tmplt = {
+        "css_files": """<link rel="stylesheet" type="text/css" href="{url}" integrity="{sha_type}-{sha_val}" crossorigin="anonymous" />""",
+        "js_files": """<script type="text/javascript" src="{url}" integrity="{sha_type}-{sha_val}" crossorigin="anonymous"></script>""",
+    }
+    for res_type in html_cdn_tmplt.keys():
+        cdn_block[res_type] = []
+        for fn in getattr(bokeh.resources.Resources(mode="absolute"), res_type):
+            url = "https://cdnjs.cloudflare.com/ajax/libs/bokeh/{ver}/{fn}".format(
+                ver=bokeh.__version__, fn=os.path.basename(fn)
+            )
+            cdn_block[res_type].append(
+                html_cdn_tmplt[res_type].format(
+                    url=url, sha_type=sha_type, sha_val=base64.b64encode(hash_file(fn, sha_type)).decode()
+                )
+            )
+        cdn_block[res_type] = "\n".join(cdn_block[res_type])
+
+    cdn_block = "\n\n".join(cdn_block.values())
+
+    return cdn_block
+
+
+def write_html(filename, title, div, script, cdn):
+    html_tmplt = textwrap.dedent(u"""\
+        <html lang="en">
+            <head>
+                <meta charset="utf-8">
+                <title>{title}</title>
+                {cdn}
+                <style>
+                  html {{
+                    width: 100%;
+                    height: 100%;
+                  }}
+                  body {{
+                    width: 90%;
+                    height: 100%;
+                    margin: auto;
+                    background-color: black;
+                  }}
+                </style>
+            </head>
+            <body>
+                {div}
+                {script}
+            </body>
+        </html>
+    """)
+
+    html_cont = html_tmplt.format(
+        title=title,
+        div=indent(div, 8),
+        script=indent(script, 8),
+        cdn=indent(cdn, 8),
+    )
+
+    with io.open(filename, "w") as fh:
+        fh.write(html_cont)
