@@ -187,7 +187,7 @@
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright John Kirkham, Howard Hughes Medical Institute, 2015-2018
+   Copyright John Kirkham, Howard Hughes Medical Institute, 2015-2019
    e-mail: kirkhamj <at> janelia <dot> hhmi <dot> org
 
    Licensed under the Apache License, Version 2.0 (the "License");
