@@ -1,5 +1,8 @@
+import contextlib
 import gzip
+import hashlib
 import io
+import mmap
 
 
 def gzip_compress(data, compresslevel=6):
@@ -9,3 +12,12 @@ def gzip_compress(data, compresslevel=6):
                        compresslevel=compresslevel) as compressor:
         compressor.write(data)
     return compressed.getvalue()
+
+
+def hash_file(fn, hn):
+    h = hashlib.new(hn)
+    with open(fn, "r") as fh:
+        with contextlib.closing(mmap.mmap(fh.fileno(), 0, prot=mmap.PROT_READ)) as mm:
+            h.update(mm)
+
+    return h.digest()
