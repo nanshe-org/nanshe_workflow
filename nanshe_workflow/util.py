@@ -4,6 +4,10 @@ import hashlib
 import io
 import mmap
 
+from builtins import (
+    map as imap,
+)
+
 
 def gzip_compress(data, compresslevel=6):
     compressed = io.BytesIO()
@@ -21,3 +25,8 @@ def hash_file(fn, hn):
             h.update(mm)
 
     return h.digest()
+
+
+def indent(text, spaces):
+    spaces = " " * int(spaces)
+    return "\n".join(imap(lambda l: spaces + l, text.splitlines()))
