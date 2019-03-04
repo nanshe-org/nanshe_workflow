@@ -34,13 +34,11 @@ build:
         name: Install for Python 2 and clean up.
         code: |-
           conda2 install -y --use-local nanshe_workflow
-          conda2 update -y --use-local --all
           conda2 clean -tipsy
     - script:
         name: Install for Python 3 and clean up.
         code: |-
           conda3 install -y --use-local nanshe_workflow
-          conda3 update -y --use-local --all
           conda3 clean -tipsy
     - script:
         name: Restrict OpenBLAS to a single thread.
@@ -91,13 +89,11 @@ build_sge:
         name: Install for Python 2 and clean up.
         code: |-
           conda2 install -y --use-local nanshe_workflow
-          conda2 update -y --use-local --all
           conda2 clean -tipsy
     - script:
         name: Install for Python 3 and clean up.
         code: |-
           conda3 install -y --use-local nanshe_workflow
-          conda3 update -y --use-local --all
           conda3 clean -tipsy
     - script:
         name: Restrict OpenBLAS to a single thread.
