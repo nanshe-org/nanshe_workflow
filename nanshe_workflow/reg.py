@@ -6,6 +6,11 @@ import scipy.ndimage
 import dask
 import dask.array
 
+try:
+    from dask.array import blockwise as da_blockwise
+except ImportError:
+    from dask.array import atop as da_blockwise
+
 
 def fourier_shift_wrap(array, shift):
     result = numpy.empty_like(array)
@@ -67,7 +72,7 @@ def roll_frames(frames, shifts):
     })
     shifts = shifts.rechunk({1: shifts.shape[1]})
 
-    rolled_frames = dask.array.atop(
+    rolled_frames = da_blockwise(
         roll_frames_chunk, tuple(irange(frames.ndim)),
         frames, tuple(irange(frames.ndim)),
         shifts, (0, frames.ndim),
