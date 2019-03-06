@@ -19,6 +19,7 @@ requirements:
     - contextlib2
     - scandir
     - numpy
+    - scikit-learn >=0.20
     - psutil
     - nanshe >=0.1.0a54
     - bokeh >=1.0.0
