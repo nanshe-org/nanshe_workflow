@@ -79,19 +79,8 @@ def cleanup_cluster_files(profile):
             profile(str):           Which iPython profile to clean up for.
     """
 
-    try:
-        # iPython 4.x solution
-        from IPython.paths import locate_profile
-    except ImportError:
-        # iPython 3.x solution
-        from IPython.utils.path import locate_profile
-
-    try:
-        # iPython 3.x solution (use iPython 4.x name)
-        from IPython.utils.path import get_security_file as find_connection_file
-    except ImportError:
-        # iPython 4.x solution
-        from ipykernel.connect import find_connection_file
+    from IPython.paths import locate_profile
+    from ipykernel.connect import find_connection_file
 
     for each_file in ["tasks.db", "tasks.db-journal"]:
         try:
