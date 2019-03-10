@@ -45,6 +45,10 @@ build:
         code: |-
           export OPENBLAS_NUM_THREADS=1
     - script:
+        name: Use spawn to start Dask Distributed workers.
+        code: |-
+          export DASK_DISTRIBUTED__WORKER__MULTIPROCESSING_METHOD="spawn"
+    - script:
         name: Test notebook(s) on Python 2.
         code: |-
           python2 setup.py test
